@@ -1,0 +1,41 @@
+{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
+    },
+    {
+      "source": "/copilot",
+      "destination": "/api"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/api"
+    },
+    {
+      "source": "/login",
+      "destination": "/api"
+    },
+    {
+      "source": "/match",
+      "destination": "/api"
+    },
+    {
+      "source": "/profile",
+      "destination": "/api"
+    },
+    {
+      "source": "/roadmap",
+      "destination": "/api"
+    },
+    {
+      "source": "/assessments",
+      "destination": "/api"
+    },
+    {
+      "source": "/((?!api/|.*\\..*).*)",
+      "destination": "/index.html"
+    }
+  ]
+}

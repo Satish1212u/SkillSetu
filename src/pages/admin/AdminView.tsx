@@ -166,26 +166,36 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentTab }) => {
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
                 <div>
-                  <span className="block text-slate-500">Primary</span>
+                  <span className="block text-slate-500 font-medium">1. Primary AI</span>
                   <span className={`font-semibold ${aiHealth.gemini === 'configured' ? 'text-emerald-700' : 'text-rose-600'}`}>
                     Gemini: {aiHealth.gemini}
                   </span>
+                  <span className="block text-[10px] font-mono text-slate-500">
+                    {aiHealth.geminiModel || 'gemini-2.5-flash'}
+                  </span>
                 </div>
                 <div>
-                  <span className="block text-slate-500">Fallback 1</span>
+                  <span className="block text-slate-500 font-medium">2. Fallback 1</span>
                   <span className={`font-semibold ${aiHealth.groq === 'configured' ? 'text-emerald-700' : 'text-slate-600'}`}>
                     Groq: {aiHealth.groq}
                   </span>
-                </div>
-                <div>
-                  <span className="block text-slate-500">Fallback 2</span>
-                  <span className={`font-semibold ${aiHealth.openrouter === 'configured' ? 'text-emerald-700' : 'text-slate-600'}`}>
-                    OpenRouter: {aiHealth.openrouter}
+                  <span className="block text-[10px] font-mono text-slate-500">
+                    {aiHealth.groqModel || 'openai/gpt-oss-120b'}
                   </span>
                 </div>
                 <div>
-                  <span className="block text-slate-500">Local Deterministic</span>
-                  <span className="font-semibold text-emerald-700">Enabled</span>
+                  <span className="block text-slate-500 font-medium">3. Fallback 2</span>
+                  <span className={`font-semibold ${aiHealth.openrouter === 'configured' ? 'text-emerald-700' : 'text-slate-600'}`}>
+                    OpenRouter: {aiHealth.openrouter}
+                  </span>
+                  <span className="block text-[10px] font-mono text-slate-500">
+                    {aiHealth.openrouterModel || 'openrouter/free'}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-slate-500 font-medium">4. Final Fallback</span>
+                  <span className="font-semibold text-emerald-700">Deterministic Engine</span>
+                  <span className="block text-[10px] font-mono text-slate-500">Active Fallback</span>
                 </div>
               </div>
             </div>

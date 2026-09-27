@@ -120,7 +120,7 @@ export const api = {
     }),
 
   askCareerCopilot: (query: string) =>
-    request<{ query: string; answer: string; groundedContext: any }>('/api/student/copilot', {
+    request<{ query: string; answer: string; provider?: string; modelUsed?: string; groundedContext?: any }>('/api/student/copilot', {
       method: 'POST',
       body: JSON.stringify({ query }),
     }),

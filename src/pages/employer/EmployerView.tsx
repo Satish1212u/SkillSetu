@@ -295,7 +295,7 @@ export const EmployerView: React.FC<EmployerViewProps> = ({ currentTab }) => {
                 Create new vacancies manually or use the AI Requirement Generator to convert natural language descriptions.
               </p>
             </div>
-            <DataBadge type="REAL" label="Gemini 3.8 Flash Generator" />
+            <DataBadge type="REAL" label="Gemini 2.5 Flash Generator" />
           </div>
 
           {/* AI Generator Box */}

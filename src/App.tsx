@@ -107,7 +107,7 @@ export default function App() {
           </div>
           <span className="text-xs font-bold tracking-tight">SkillSetu Help</span>
           <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 border border-slate-700 hidden sm:inline">
-            3.5 Flash / 3.1 Pro
+            Gemini 2.5 Flash / Multi-AI
           </span>
         </button>
       )}

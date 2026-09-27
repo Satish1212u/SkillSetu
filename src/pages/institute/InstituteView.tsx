@@ -202,7 +202,7 @@ export const InstituteView: React.FC<InstituteViewProps> = ({ currentTab }) => {
                 Upload or paste college course syllabus text. The AI &amp; deterministic extractor maps competencies, subjects, and coverage depth.
               </p>
             </div>
-            <DataBadge type="REAL" label="Gemini 3.8 Flash Parser" />
+            <DataBadge type="REAL" label="Gemini 2.5 Flash Parser" />
           </div>
 
           <form onSubmit={handleUploadSyllabus} className="space-y-4">

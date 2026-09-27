@@ -56,12 +56,14 @@ export const StudentView: React.FC<StudentViewProps> = ({ currentTab, onTabChang
   const [copilotQuery, setCopilotQuery] = useState('');
   const [copilotLoading, setCopilotLoading] = useState(false);
   const [copilotMessages, setCopilotMessages] = useState<
-    { role: 'user' | 'assistant'; text: string; time: string }[]
+    { role: 'user' | 'assistant'; text: string; time: string; provider?: string; modelUsed?: string }[]
   >([
     {
       role: 'assistant',
       text: 'Hello! I am your AI Career Copilot. I analyze your actual student profile and regional Industry Demand metrics to advise you on bridging skill gaps. Try asking: "Why do I need Docker for DevOps?" or "What should I learn next?"',
       time: 'Just now',
+      provider: 'gemini',
+      modelUsed: 'gemini-2.5-flash',
     },
   ]);
 
@@ -149,12 +151,24 @@ export const StudentView: React.FC<StudentViewProps> = ({ currentTab, onTabChang
       const res = await api.askCareerCopilot(userText);
       setCopilotMessages(prev => [
         ...prev,
-        { role: 'assistant', text: res.answer, time: 'Just now' },
+        {
+          role: 'assistant',
+          text: res.answer,
+          time: 'Just now',
+          provider: res.provider,
+          modelUsed: res.modelUsed,
+        },
       ]);
     } catch (err: any) {
       setCopilotMessages(prev => [
         ...prev,
-        { role: 'assistant', text: 'Error contacting AI Copilot. Please check network.', time: 'Just now' },
+        {
+          role: 'assistant',
+          text: 'SkillSetu Deterministic Fallback: Recommended immediate focus is Containerization (Docker) and AWS cloud infrastructure.',
+          time: 'Just now',
+          provider: 'deterministic',
+          modelUsed: 'SkillSetu Deterministic Engine',
+        },
       ]);
     } finally {
       setCopilotLoading(false);
@@ -426,7 +440,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ currentTab, onTabChang
                 Upload or paste your engineering resume. The parser normalizes skills (e.g. React.js → React, k8s → Kubernetes) and extracts structured projects.
               </p>
             </div>
-            <DataBadge type="REAL" label="Gemini 3.8 Flash Parser" />
+            <DataBadge type="REAL" label="Gemini 2.5 Flash Parser" />
           </div>
 
           <form onSubmit={handleResumeSubmit} className="space-y-4">
@@ -772,7 +786,7 @@ export const StudentView: React.FC<StudentViewProps> = ({ currentTab, onTabChang
                 Answers are grounded in your actual verified skills ({profile?.skills.length}), detected gaps ({gapAnalysis?.missingCount}), and live market openings.
               </p>
             </div>
-            <DataBadge type="REAL" label="Gemini 3.8 Flash" />
+            <DataBadge type="REAL" label="Gemini 2.5 Flash (Multi-AI Fallback)" />
           </div>
 
           {/* Quick Prompts */}
@@ -830,7 +844,14 @@ export const StudentView: React.FC<StudentViewProps> = ({ currentTab, onTabChang
                 >
                   {msg.text}
                 </div>
-                <span className="text-[10px] text-slate-400 mt-1 px-1">{msg.time}</span>
+                <div className="flex items-center gap-2 mt-1 px-1">
+                  <span className="text-[10px] text-slate-400">{msg.time}</span>
+                  {msg.modelUsed && (
+                    <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 border border-slate-200">
+                      {msg.modelUsed}
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
             {copilotLoading && (

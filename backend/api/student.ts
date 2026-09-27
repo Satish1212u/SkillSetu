@@ -4,6 +4,7 @@ import { skillExtractor } from '../services/skillExtractor';
 import { matchingEngine } from '../services/matchingEngine';
 import {
   askCareerCopilotWithGemini,
+  getDeterministicCopilotAnswer,
   generateSimulatorScenarioWithGemini,
   simulatorTurnWithGemini,
   evaluateSimulationWithGemini,
@@ -906,19 +907,42 @@ studentRouter.post('/copilot', async (req: Request, res: Response) => {
       topRegionalOpenings: 32000,
     };
 
-    const aiAnswer = await askCareerCopilotWithGemini(query, context);
+    const copilotResult = await askCareerCopilotWithGemini(query, context);
 
     res.json({
       query,
-      answer: aiAnswer,
+      answer: copilotResult.answer,
+      provider: copilotResult.provider,
+      modelUsed: copilotResult.modelUsed,
       groundedContext: {
         targetRole: context.targetRole,
         evaluatedMissingSkills: missingSkills,
-        modelUsed: 'gemini-3.8-flash',
+        modelUsed: copilotResult.modelUsed,
+        provider: copilotResult.provider,
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Copilot query failed.' });
+    const profile = getActiveProfile(req);
+    const fallbackAnswer = getDeterministicCopilotAnswer(req.body?.query || '', {
+      name: profile?.userId || 'Student Candidate',
+      targetRole: profile?.targetRole || 'Software / Cloud Engineer',
+      currentSkills: (profile?.skills || []).map(s => s.skillId),
+      missingSkills: ['Docker', 'AWS'],
+      targetJobs: [],
+      topRegionalOpenings: 32000,
+    });
+    res.json({
+      query: req.body?.query || '',
+      answer: fallbackAnswer,
+      provider: 'deterministic',
+      modelUsed: 'SkillSetu Deterministic Engine',
+      groundedContext: {
+        targetRole: profile?.targetRole || 'Software / Cloud Engineer',
+        evaluatedMissingSkills: ['Docker', 'AWS'],
+        modelUsed: 'SkillSetu Deterministic Engine',
+        provider: 'deterministic',
+      },
+    });
   }
 });
 

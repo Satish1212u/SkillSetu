@@ -107,7 +107,7 @@ Standardize and extract individual skills accurately. Return ONLY a valid JSON o
     }
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
       contents: contentsPayload,
       config: {
         responseMimeType: 'application/json',
@@ -174,7 +174,7 @@ extract and structure the required skills, preferred skills, typical Indian tech
 and professional job description. Return JSON matching the schema.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
       contents: `${systemPrompt}\n\nUSER PROMPT: "${promptInput}"`,
       config: {
         responseMimeType: 'application/json',
@@ -230,7 +230,7 @@ export async function analyzeCurriculumWithGemini(
 Analyze the syllabus, extract subjects and technical competencies, identify outdated topics vs missing modern industry skills (e.g. Docker, Kubernetes, AWS, Modern CI/CD, GenAI), and provide recommendations. Return JSON.`;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
       contents: `${prompt}\n\nSYLLABUS CONTENT:\n"""\n${syllabusText}\n"""`,
       config: {
         responseMimeType: 'application/json',
@@ -258,6 +258,70 @@ Analyze the syllabus, extract subjects and technical competencies, identify outd
   }
 }
 
+export interface CareerCopilotResult {
+  answer: string;
+  provider: string;
+  modelUsed: string;
+}
+
+export function getDeterministicCopilotAnswer(
+  userQuery: string,
+  studentContext: {
+    name: string;
+    targetRole: string;
+    currentSkills: string[];
+    missingSkills: string[];
+    targetJobs: string[];
+    topRegionalOpenings: number;
+  }
+): string {
+  const qLower = userQuery.toLowerCase();
+  if (qLower.includes('learn next') || qLower.includes('what should i learn')) {
+    return `Based on your target role (${studentContext.targetRole}):
+1. **Immediate Priority**: Start with **Docker**. 78% of benchmark DevOps/Cloud job postings require container creation and multi-stage Dockerfiles.
+2. **Secondary Priority**: Follow up with **AWS fundamentals** (EC2, VPC, IAM, S3).
+3. **Foundation Check**: Your existing skills in ${studentContext.currentSkills.slice(0, 3).join(', ')} already provide a strong base for OS and scripting.`;
+  }
+
+  if (qLower.includes('why is docker') || qLower.includes('why do i need docker')) {
+    return `**Why Docker Matters for ${studentContext.targetRole}**:
+- **Market Prevalence**: Docker is mandated in 78% of active cloud & DevOps postings in our dataset.
+- **Role Integration**: Production services are packaged as microcontainers; CI/CD runners depend on container images for testing and deployment.
+- **Current Profile**: Your profile has not detected Docker yet. Acquiring intermediate proficiency addresses one of your two highest-priority market-alignment gaps.`;
+  }
+
+  if (qLower.includes('biggest skill gaps') || qLower.includes('biggest gaps')) {
+    return `**Your Critical Skill Gaps for ${studentContext.targetRole}**:
+1. **Docker** (High Priority - 78% market prevalence)
+2. **AWS** (High Priority - 82% market prevalence)
+3. **Kubernetes** (Medium Priority - Container orchestration)
+4. **CI/CD Pipelines** (Medium Priority - Automated testing & deployment)
+5. **Terraform** (Low/Emerging Priority - Infrastructure as Code)`;
+  }
+
+  if (qLower.includes('which job roles') || qLower.includes('job match') || qLower.includes('roles match')) {
+    return `**Top Roles Matching Your Profile**:
+1. **Cloud Support Engineer** (~56% match) - Strong fit with your Linux, Git, and SQL foundation.
+2. **Junior Cloud Engineer** (~51% match) - Aligns with Linux and Python skills.
+3. **Associate DevOps Engineer** (~48% match) - Strong OS and Git baseline; bridging Docker and AWS will significantly improve alignment.`;
+  }
+
+  if (qLower.includes('most demanded') || qLower.includes('skills are most demanded')) {
+    return `**Most Demanded Skills for ${studentContext.targetRole}**:
+- **AWS** (Index: 88/100 demand)
+- **Linux** (Index: 85/100 demand - ✓ Already covered in your profile)
+- **Docker** (Index: 82/100 demand - ⚠ Current Gap)
+- **Git** (Index: 80/100 demand - ✓ Already verified in your profile)
+- **Kubernetes** (Index: 66/100 demand - ⚠ Current Gap)`;
+  }
+
+  return `Based on your profile targeting "${studentContext.targetRole}":
+- You currently possess verified foundations in: ${studentContext.currentSkills.join(', ')}.
+- Your primary detected industry skill gaps are: ${studentContext.missingSkills.join(', ')}.
+- Benchmark market dataset shows active vacancies including: ${studentContext.targetJobs.slice(0, 2).join(', ')}.
+Recommended immediate focus: Containerization (Docker) and AWS cloud infrastructure.`;
+}
+
 export async function askCareerCopilotWithGemini(
   userQuery: string,
   studentContext: {
@@ -268,64 +332,8 @@ export async function askCareerCopilotWithGemini(
     targetJobs: string[];
     topRegionalOpenings: number;
   }
-): Promise<string> {
-  const ai = getAIClient();
-  if (!ai) {
-    const qLower = userQuery.toLowerCase();
-    if (qLower.includes('learn next') || qLower.includes('what should i learn')) {
-      return `[LOCAL INTELLIGENCE MODE]
-Based on your target role (${studentContext.targetRole}):
-1. **Immediate Priority**: Start with **Docker**. 78% of benchmark DevOps/Cloud job postings require container creation and multi-stage Dockerfiles.
-2. **Secondary Priority**: Follow up with **AWS fundamentals** (EC2, VPC, IAM, S3).
-3. **Foundation Check**: Your existing skills in ${studentContext.currentSkills.slice(0, 3).join(', ')} already provide a strong base for OS and scripting.`;
-    }
-
-    if (qLower.includes('why is docker') || qLower.includes('why do i need docker')) {
-      return `[LOCAL INTELLIGENCE MODE]
-**Why Docker Matters for ${studentContext.targetRole}**:
-- **Market Prevalence**: Docker is mandated in 78% of active cloud & DevOps postings in our dataset.
-- **Role Integration**: Production services are packaged as microcontainers; CI/CD runners depend on container images for testing and deployment.
-- **Current Profile**: Your profile has not detected Docker yet. Acquiring intermediate proficiency addresses one of your two highest-priority market-alignment gaps.`;
-    }
-
-    if (qLower.includes('biggest skill gaps') || qLower.includes('biggest gaps')) {
-      return `[LOCAL INTELLIGENCE MODE]
-**Your Critical Skill Gaps for ${studentContext.targetRole}**:
-1. **Docker** (High Priority - 78% market prevalence)
-2. **AWS** (High Priority - 82% market prevalence)
-3. **Kubernetes** (Medium Priority - Container orchestration)
-4. **CI/CD Pipelines** (Medium Priority - Automated testing & deployment)
-5. **Terraform** (Low/Emerging Priority - Infrastructure as Code)`;
-    }
-
-    if (qLower.includes('which job roles') || qLower.includes('job match') || qLower.includes('roles match')) {
-      return `[LOCAL INTELLIGENCE MODE]
-**Top Roles Matching Your Profile**:
-1. **Cloud Support Engineer** (~56% match) - Strong fit with your Linux, Git, and SQL foundation.
-2. **Junior Cloud Engineer** (~51% match) - Aligns with Linux and Python skills.
-3. **Associate DevOps Engineer** (~48% match) - Strong OS and Git baseline; bridging Docker and AWS will significantly improve alignment.`;
-    }
-
-    if (qLower.includes('most demanded') || qLower.includes('skills are most demanded')) {
-      return `[LOCAL INTELLIGENCE MODE]
-**Most Demanded Skills for ${studentContext.targetRole}**:
-- **AWS** (Index: 88/100 demand)
-- **Linux** (Index: 85/100 demand - ✓ Already covered in your profile)
-- **Docker** (Index: 82/100 demand - ⚠ Current Gap)
-- **Git** (Index: 80/100 demand - ✓ Already verified in your profile)
-- **Kubernetes** (Index: 66/100 demand - ⚠ Current Gap)`;
-    }
-
-    return `[LOCAL INTELLIGENCE MODE]
-Based on your profile targeting "${studentContext.targetRole}":
-- You currently possess verified foundations in: ${studentContext.currentSkills.join(', ')}.
-- Your primary detected industry skill gaps are: ${studentContext.missingSkills.join(', ')}.
-- Benchmark market dataset shows active vacancies including: ${studentContext.targetJobs.slice(0, 2).join(', ')}.
-Recommended immediate focus: Containerization (Docker) and AWS cloud infrastructure.`;
-  }
-
-  try {
-    const systemInstruction = `You are SkillSetu Career Copilot for the Smart India Hackathon platform.
+): Promise<CareerCopilotResult> {
+  const systemInstruction = `You are SkillSetu Career Copilot for the Smart India Hackathon platform.
 You assist Indian engineering students to bridge skill gaps between academia and industry.
 Always ground your answers in the user's ACTUAL PROFILE and REAL Industry Demand METRICS:
 - Student Name: ${studentContext.name}
@@ -341,19 +349,30 @@ Rules:
 3. Be professional, encouraging, concise, and structured.
 4. Separate verified data from recommendations.`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: userQuery,
-      config: {
-        systemInstruction,
-      },
+  try {
+    const aiRes = await generateAIResponse({
+      task: 'CAREER_COPILOT',
+      systemPrompt: systemInstruction,
+      userPrompt: userQuery,
     });
 
-    return response.text || 'Unable to generate response.';
-  } catch (err) {
-    console.error('Gemini Copilot error:', err);
-    return `Career Copilot could not reach remote AI service. Based on your current profile, focus on bridging: ${studentContext.missingSkills.join(', ')}.`;
+    if (aiRes.success && aiRes.response && aiRes.provider !== 'none') {
+      return {
+        answer: aiRes.response,
+        provider: aiRes.provider,
+        modelUsed: aiRes.model,
+      };
+    }
+  } catch (err: any) {
+    console.warn('[AI ROUTER] Copilot centralized router error, falling back to deterministic:', err?.message);
   }
+
+  // 4. FINAL FALLBACK: Deterministic SkillSetu engine
+  return {
+    answer: getDeterministicCopilotAnswer(userQuery, studentContext),
+    provider: 'deterministic',
+    modelUsed: 'SkillSetu Deterministic Engine',
+  };
 }
 
 export type SupportedChatModel = 'gemini-3.5-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite';
@@ -630,7 +649,7 @@ Return ONLY a JSON object matching this schema:
 }`;
 
     const res = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
@@ -721,7 +740,7 @@ Rules for your response:
     ];
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
       contents,
       config: {
         systemInstruction: systemPrompt,
@@ -819,7 +838,7 @@ Return ONLY a JSON object:
 }`;
 
     const res = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
       contents: prompt,
       config: {
         responseMimeType: 'application/json',
