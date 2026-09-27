@@ -202,16 +202,16 @@ export const api = {
       body: JSON.stringify({ rawText }),
     }),
 
-  // Multi-Turn Gemini Chatbot
+  // Multi-Turn SkillSetu Help Chatbot
   sendChatMessage: (payload: {
     messages: { role: 'user' | 'assistant' | 'model'; content: string }[];
-    modelChoice?: 'gemini-3.5-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite';
+    modelChoice?: string;
     systemInstruction?: string;
     userRole?: string;
     userName?: string;
     organization?: string;
   }) =>
-    request<{ reply: string; modelUsed: string; timestamp: string }>('/api/chat', {
+    request<{ reply: string; answer?: string; provider?: string; modelUsed: string; fallbackUsed?: boolean; timestamp: string }>('/api/chat', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),

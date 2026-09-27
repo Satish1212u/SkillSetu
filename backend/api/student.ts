@@ -912,8 +912,10 @@ studentRouter.post('/copilot', async (req: Request, res: Response) => {
     res.json({
       query,
       answer: copilotResult.answer,
+      reply: copilotResult.answer,
       provider: copilotResult.provider,
       modelUsed: copilotResult.modelUsed,
+      fallbackUsed: copilotResult.provider === 'deterministic',
       groundedContext: {
         targetRole: context.targetRole,
         evaluatedMissingSkills: missingSkills,
@@ -934,8 +936,10 @@ studentRouter.post('/copilot', async (req: Request, res: Response) => {
     res.json({
       query: req.body?.query || '',
       answer: fallbackAnswer,
+      reply: fallbackAnswer,
       provider: 'deterministic',
       modelUsed: 'SkillSetu Deterministic Engine',
+      fallbackUsed: true,
       groundedContext: {
         targetRole: profile?.targetRole || 'Software / Cloud Engineer',
         evaluatedMissingSkills: ['Docker', 'AWS'],

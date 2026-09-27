@@ -221,6 +221,19 @@ async function tryOpenRouter(options: AIRequestOptions): Promise<string> {
 }
 
 /**
+ * Sanitize error messages so that API keys, tokens, or authorization headers are never logged.
+ */
+function sanitizeError(err: any): string {
+  let msg = err?.message || String(err);
+  msg = msg.replace(/AIza[0-9A-Za-z-_]{20,}/g, '[REDACTED_API_KEY]');
+  msg = msg.replace(/gsk_[0-9A-Za-z-_]{20,}/g, '[REDACTED_GROQ_KEY]');
+  msg = msg.replace(/sk-or-[0-9A-Za-z-_]{20,}/g, '[REDACTED_OPENROUTER_KEY]');
+  msg = msg.replace(/AQ\.[0-9A-Za-z-_]{20,}/g, '[REDACTED_TOKEN]');
+  msg = msg.replace(/Bearer\s+[^\s"']+/gi, 'Bearer [REDACTED]');
+  return msg;
+}
+
+/**
  * Centralized AI Router implementing the strict provider fallback chain:
  * 1. Gemini 2.5 Flash (Primary)
  *      ↓ [429, 500, 502, 503, timeout, unavailable model, invalid API key, network error]
@@ -252,7 +265,7 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<Sta
       if (isNonRetryableError(firstErr)) {
         throw firstErr;
       }
-      console.warn(`[AI ROUTER] ${providerName} attempt 1 failed (${firstErr.message}). Retrying once...`);
+      console.warn(`[AI] ${providerName} attempt 1 failed (${sanitizeError(firstErr)}). Retrying once...`);
       return await fn();
     }
   }
@@ -260,66 +273,76 @@ export async function generateAIResponse(options: AIRequestOptions): Promise<Sta
   // -------------------------------------------------------------
   // 1. PRIMARY: Gemini 2.5 Flash
   // -------------------------------------------------------------
+  const geminiModel = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  console.log(`[AI] Gemini attempt | Task: ${options.task} | Model: ${geminiModel}`);
   try {
     const text = await runWithOneRetry('Gemini', () => tryGemini(options));
     const validated = validateJson(text);
-    console.log(`[AI ROUTER] Task: ${options.task} | Provider: Gemini | Model: ${process.env.GEMINI_MODEL || 'gemini-2.5-flash'} | Status: SUCCESS`);
+    console.log(`[AI] Gemini status: SUCCESS | Task: ${options.task} | Model: ${geminiModel}`);
     return {
       success: true,
       provider: 'gemini',
-      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+      model: geminiModel,
       response: validated,
       fallbackUsed: false,
     };
   } catch (geminiErr: any) {
     fallbackUsed = true;
-    fallbackReason = `gemini_failed: ${geminiErr.message}`;
-    console.warn(`[AI ROUTER] Task: ${options.task} | Gemini FAILED (${geminiErr.message}) -> Falling back to Groq`);
+    const cleanErr = sanitizeError(geminiErr);
+    fallbackReason = `gemini_failed: ${cleanErr}`;
+    console.warn(`[AI] Gemini status: FAILURE | Task: ${options.task} | Error: ${cleanErr} -> Falling back to Groq`);
   }
 
   // -------------------------------------------------------------
   // 2. FALLBACK 1: Groq GPT-OSS 120B
   // -------------------------------------------------------------
+  const groqModel = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+  console.log(`[AI] Groq attempt | Task: ${options.task} | Model: ${groqModel}`);
   try {
     const text = await runWithOneRetry('Groq', () => tryGroq(options));
     const validated = validateJson(text);
-    console.log(`[AI ROUTER] Task: ${options.task} | Provider: Groq | Model: ${process.env.GROQ_MODEL || 'openai/gpt-oss-120b'} | Status: SUCCESS`);
+    console.log(`[AI] Groq status: SUCCESS | Task: ${options.task} | Model: ${groqModel}`);
     return {
       success: true,
       provider: 'groq',
-      model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+      model: groqModel,
       response: validated,
       fallbackUsed: true,
       fallbackReason,
     };
   } catch (groqErr: any) {
-    fallbackReason = `groq_failed: ${groqErr.message}`;
-    console.warn(`[AI ROUTER] Task: ${options.task} | Groq FAILED (${groqErr.message}) -> Falling back to OpenRouter`);
+    const cleanErr = sanitizeError(groqErr);
+    fallbackReason = `groq_failed: ${cleanErr}`;
+    console.warn(`[AI] Groq status: FAILURE | Task: ${options.task} | Error: ${cleanErr} -> Falling back to OpenRouter`);
   }
 
   // -------------------------------------------------------------
   // 3. FALLBACK 2: OpenRouter Free
   // -------------------------------------------------------------
+  const openRouterModel = process.env.OPENROUTER_MODEL || 'openrouter/free';
+  console.log(`[AI] OpenRouter attempt | Task: ${options.task} | Model: ${openRouterModel}`);
   try {
     const text = await runWithOneRetry('OpenRouter', () => tryOpenRouter(options));
     const validated = validateJson(text);
-    console.log(`[AI ROUTER] Task: ${options.task} | Provider: OpenRouter | Model: ${process.env.OPENROUTER_MODEL || 'openrouter/free'} | Status: SUCCESS`);
+    console.log(`[AI] OpenRouter status: SUCCESS | Task: ${options.task} | Model: ${openRouterModel}`);
     return {
       success: true,
       provider: 'openrouter',
-      model: process.env.OPENROUTER_MODEL || 'openrouter/free',
+      model: openRouterModel,
       response: validated,
       fallbackUsed: true,
       fallbackReason,
     };
   } catch (openRouterErr: any) {
-    fallbackReason = `openrouter_failed: ${openRouterErr.message}`;
-    console.warn(`[AI ROUTER] Task: ${options.task} | OpenRouter FAILED (${openRouterErr.message}) -> Falling back to Deterministic Engine`);
+    const cleanErr = sanitizeError(openRouterErr);
+    fallbackReason = `openrouter_failed: ${cleanErr}`;
+    console.warn(`[AI] OpenRouter status: FAILURE | Task: ${options.task} | Error: ${cleanErr} -> Falling back to Deterministic Engine`);
   }
 
   // -------------------------------------------------------------
   // 4. FINAL FALLBACK: Caller triggers deterministic engine
   // -------------------------------------------------------------
+  console.log(`[AI] Deterministic fallback engaged | Task: ${options.task}`);
   return {
     success: false,
     provider: 'none',

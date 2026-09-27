@@ -25,7 +25,10 @@ chatRouter.post('/', async (req: Request, res: Response) => {
 
     res.json({
       reply: result.reply,
+      answer: result.answer,
+      provider: result.provider,
       modelUsed: result.modelUsed,
+      fallbackUsed: result.fallbackUsed,
       timestamp: new Date().toISOString(),
     });
   } catch (err: any) {

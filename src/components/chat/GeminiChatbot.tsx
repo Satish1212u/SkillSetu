@@ -30,12 +30,13 @@ interface GeminiChatbotProps {
   onClose?: () => void;
 }
 
-type ModelType = 'gemini-3.5-flash' | 'gemini-3.1-pro-preview' | 'gemini-3.1-flash-lite';
+type ModelType = 'gemini-2.5-flash' | 'openai/gpt-oss-120b' | 'openrouter/free';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  provider?: string;
   modelUsed?: string;
   timestamp: string;
 }
@@ -47,7 +48,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = ({
   isOpen = false,
   onClose,
 }) => {
-  const [modelChoice, setModelChoice] = useState<ModelType>('gemini-3.5-flash');
+  const [modelChoice, setModelChoice] = useState<ModelType>('gemini-2.5-flash');
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome-1',
@@ -58,13 +59,15 @@ I am grounded in your **${currentRole}** context. You can ask me to:
 - Diagnose skill gaps and evaluate job postings
 - Review and recommend curriculum updates for higher education
 - Draft job requirements and evaluate candidate competencies
-- Analyze national Industry Demand deficits and forecast trends
+- Analyze regional Industry Demand deficits and forecast trends
 
-Select a model based on your task complexity:
-- **gemini-3.5-flash**: Ideal for general market & skill queries
-- **gemini-3.1-pro-preview**: Best for deep curriculum restructuring & complex strategy
-- **gemini-3.1-flash-lite**: Optimized for ultra-fast lookups`,
-      modelUsed: 'gemini-3.5-flash',
+Supported Multi-AI Fallback Engine:
+- **gemini-2.5-flash** (Primary): High-speed multimodal analysis & grounded intelligence
+- **openai/gpt-oss-120b** (Groq): High-throughput open inference
+- **openrouter/free** (OpenRouter): Open-source reasoning & secondary backup
+- **SkillSetu Deterministic Engine**: Continuous fallback guarantee if external APIs are unavailable`,
+      provider: 'gemini',
+      modelUsed: 'gemini-2.5-flash',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -149,7 +152,8 @@ Select a model based on your task complexity:
       const assistantMessage: Message = {
         id: `asst-${Date.now()}`,
         role: 'assistant',
-        content: res.reply,
+        content: res.reply || res.answer || '',
+        provider: res.provider,
         modelUsed: res.modelUsed,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
@@ -159,7 +163,7 @@ Select a model based on your task complexity:
       const errorMessage: Message = {
         id: `err-${Date.now()}`,
         role: 'assistant',
-        content: `Error generating response: ${err.message || 'Please check your connection and retry.'}`,
+        content: `Error contacting SkillSetu Help: ${err.message || 'Please check your connection and retry.'}`,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -270,44 +274,44 @@ Select a model based on your task complexity:
           <div className="flex items-center gap-1 bg-white p-0.5 rounded-lg border border-slate-200">
             <button
               type="button"
-              onClick={() => setModelChoice('gemini-3.1-flash-lite')}
+              onClick={() => setModelChoice('gemini-2.5-flash')}
               className={`px-2 py-1 rounded text-[11px] font-medium transition-all flex items-center gap-1 ${
-                modelChoice === 'gemini-3.1-flash-lite'
+                modelChoice === 'gemini-2.5-flash'
                   ? 'bg-slate-900 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
-              title="Ultra-fast responses for quick definitions & lookups"
+              title="Primary: Gemini 2.5 Flash grounded intelligence"
+            >
+              <Sparkles className="w-3 h-3 text-indigo-400" />
+              <span>Gemini 2.5 Flash</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setModelChoice('openai/gpt-oss-120b')}
+              className={`px-2 py-1 rounded text-[11px] font-medium transition-all flex items-center gap-1 ${
+                modelChoice === 'openai/gpt-oss-120b'
+                  ? 'bg-slate-900 text-white font-semibold shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+              title="Fallback 1: Groq GPT-OSS 120B open inference"
             >
               <Zap className="w-3 h-3 text-amber-400" />
-              <span>Flash-Lite</span>
+              <span>Groq 120B</span>
             </button>
 
             <button
               type="button"
-              onClick={() => setModelChoice('gemini-3.5-flash')}
+              onClick={() => setModelChoice('openrouter/free')}
               className={`px-2 py-1 rounded text-[11px] font-medium transition-all flex items-center gap-1 ${
-                modelChoice === 'gemini-3.5-flash'
+                modelChoice === 'openrouter/free'
                   ? 'bg-slate-900 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
-              title="General tasks: balanced speed & deep Industry Demand understanding"
-            >
-              <Cpu className="w-3 h-3 text-indigo-400" />
-              <span>3.5 Flash</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setModelChoice('gemini-3.1-pro-preview')}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-all flex items-center gap-1 ${
-                modelChoice === 'gemini-3.1-pro-preview'
-                  ? 'bg-slate-900 text-white font-semibold shadow-xs'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-              title="Complex tasks: deep curriculum restructuring, econometric modeling & policy synthesis"
+              title="Fallback 2: OpenRouter Free models"
             >
               <Brain className="w-3 h-3 text-emerald-400" />
-              <span>3.1 Pro</span>
+              <span>OpenRouter</span>
             </button>
           </div>
         </div>
@@ -362,7 +366,14 @@ Select a model based on your task complexity:
                 ) : (
                   <>
                     <span className="font-semibold text-indigo-700 flex items-center gap-1">
-                      <Sparkles className="w-3 h-3 text-indigo-500" /> Gemini
+                      <Sparkles className="w-3 h-3 text-indigo-500" />
+                      {msg.provider === 'groq'
+                        ? 'Groq'
+                        : msg.provider === 'openrouter'
+                        ? 'OpenRouter'
+                        : msg.provider === 'deterministic'
+                        ? 'SkillSetu Engine'
+                        : 'Gemini'}
                     </span>
                     {msg.modelUsed && (
                       <span className="text-[10px] bg-slate-200 text-slate-700 px-1 rounded">
