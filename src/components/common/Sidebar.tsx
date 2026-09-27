@@ -70,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = navItemsMap[currentRole] || [];
 
   return (
-    <aside className="w-full md:w-64 bg-white border-r border-slate-200 shrink-0 h-full overflow-y-auto p-4 flex flex-col justify-between">
+    <aside className="w-full md:w-64 bg-white border-b md:border-b-0 md:border-r border-slate-200 shrink-0 md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:overflow-y-auto p-4 flex flex-col justify-between">
       <div className="space-y-1">
         <div className="px-3 py-2 text-[11px] font-semibold tracking-wider uppercase text-slate-500">
           {currentRole} WORKSPACE

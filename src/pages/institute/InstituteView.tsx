@@ -92,7 +92,7 @@ export const InstituteView: React.FC<InstituteViewProps> = ({ currentTab }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       {/* 1. OVERVIEW */}
       {currentTab === 'overview' && (
         <div className="space-y-6">

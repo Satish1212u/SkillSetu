@@ -199,7 +199,7 @@ export const EmployerView: React.FC<EmployerViewProps> = ({ currentTab }) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       {/* 1. OVERVIEW */}
       {currentTab === 'overview' && (
         <div className="space-y-6">

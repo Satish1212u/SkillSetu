@@ -106,7 +106,7 @@ export const AdminView: React.FC<AdminViewProps> = ({ currentTab }) => {
   const COLORS = ['#0f172a', '#334155', '#475569', '#64748b', '#94a3b8'];
 
   return (
-    <div className="space-y-6">
+    <div className="w-full min-w-0 space-y-6">
       {/* 1. OVERVIEW */}
       {currentTab === 'overview' && (
         <div className="space-y-6">

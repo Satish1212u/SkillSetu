@@ -26,16 +26,16 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+    <header className="bg-white border-b border-slate-200 sticky top-0 z-40 w-full">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-16 gap-3">
           {/* Brand Identity with KaushalSetu Logo */}
-          <div className="flex items-center">
+          <div className="flex items-center shrink-0">
             <KaushalSetuLogo size="md" variant="horizontal" />
           </div>
 
           {/* Quick Role Segmented Switcher for Hackathon Judges */}
-          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/80">
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200/80 overflow-x-auto">
             {roles.map(({ role, label, icon: Icon }) => {
               const isActive = currentRole === role;
               return (
@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
                   key={role}
                   type="button"
                   onClick={() => onRoleChange(role)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${isActive
+                  className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-all whitespace-nowrap ${isActive
                       ? 'bg-white text-slate-950 shadow-sm border border-slate-200'
                       : 'text-slate-600 hover:text-slate-950'
                     }`}
@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* SkillSetu Help Quick Launch & Active User Details */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 shrink-0">
             {onOpenChat && (
               <button
                 type="button"

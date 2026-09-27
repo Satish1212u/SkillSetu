@@ -68,7 +68,7 @@ export default function App() {
   const activeUserInfo = roleUserMap[currentRole];
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-100 flex flex-col font-sans relative">
+    <div className="min-h-screen w-full bg-slate-100 flex flex-col font-sans relative">
       <Header
         currentRole={currentRole}
         onRoleChange={handleRoleChange}
@@ -77,14 +77,14 @@ export default function App() {
         onOpenChat={() => setIsChatOpen(prev => !prev)}
       />
 
-      <div className="flex-1 flex flex-col md:flex-row max-w-7xl w-full mx-auto overflow-hidden">
+      <div className="flex-1 w-full flex flex-col md:flex-row min-w-0">
         <Sidebar
           currentRole={currentRole}
           currentTab={activeTab}
           onTabChange={setActiveTab}
         />
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8">
           {currentRole === 'STUDENT' && (
             <StudentView currentTab={activeTab} onTabChange={setActiveTab} />
           )}
