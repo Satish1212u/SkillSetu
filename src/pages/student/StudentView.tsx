@@ -13,6 +13,7 @@ import { TopMatchedRolesPreview } from '../../components/widgets/TopMatchedRoles
 import { SkillDetailDrawer, SkillDetailData } from '../../components/widgets/SkillDetailDrawer';
 import { ProfileCompletenessModal } from '../../components/widgets/ProfileCompletenessModal';
 import { CareerSimulator } from '../../components/simulator/CareerSimulator';
+import { ResumeIntelligenceSection } from '../../components/resume/ResumeIntelligenceSection';
 import {
   Upload,
   CheckCircle,
@@ -432,70 +433,12 @@ export const StudentView: React.FC<StudentViewProps> = ({ currentTab, onTabChang
 
       {/* 2. RESUME INTELLIGENCE */}
       {currentTab === 'resume' && (
-        <div className="bg-white border border-slate-200 rounded-lg p-6 space-y-6">
-          <div className="pb-4 border-b border-slate-100 flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-slate-900 tracking-tight">Resume Intelligence &amp; Skill Extraction</h3>
-              <p className="text-xs text-slate-500">
-                Upload or paste your engineering resume. The parser normalizes skills (e.g. React.js → React, k8s → Kubernetes) and extracts structured projects.
-              </p>
-            </div>
-            <DataBadge type="REAL" label="Gemini 2.5 Flash Parser" />
-          </div>
-
-          <form onSubmit={handleResumeSubmit} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Paste Resume Text (or Upload Plain Text/PDF Content)
-              </label>
-              <textarea
-                rows={8}
-                value={resumeTextInput}
-                onChange={e => setResumeTextInput(e.target.value)}
-                placeholder="Paste full resume text with Education, Technical Skills, Projects, and Work Experience..."
-                className="w-full text-xs font-mono p-3 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-900"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <button
-                type="button"
-                onClick={() => setResumeTextInput(profile?.resumeText || '')}
-                className="text-xs font-medium text-slate-600 hover:text-slate-900 underline"
-              >
-                Load Sample Final-Year DevOps Resume
-              </button>
-
-              <button
-                type="submit"
-                disabled={uploadingResume || !resumeTextInput.trim()}
-                className="px-4 py-2 text-xs font-semibold text-white bg-slate-900 hover:bg-slate-800 disabled:opacity-50 rounded-lg shadow-sm flex items-center gap-2"
-              >
-                {uploadingResume && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                <span>Extract &amp; Normalize Skills</span>
-              </button>
-            </div>
-          </form>
-
-          {resumeUploadResult && (
-            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg space-y-3">
-              <div className="flex items-center gap-2 text-emerald-900 font-bold text-xs">
-                <CheckCircle className="w-4 h-4 text-emerald-600" />
-                <span>{resumeUploadResult.message}</span>
-              </div>
-              <div className="space-y-1">
-                <p className="text-xs font-semibold text-emerald-950">Normalized Canonical Skills Detected:</p>
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  {resumeUploadResult.normalizedSkills?.map((s: any) => (
-                    <span key={s.id} className="px-2 py-0.5 bg-white border border-emerald-200 text-emerald-800 text-[11px] font-semibold rounded">
-                      {s.canonicalName} ({s.category})
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <ResumeIntelligenceSection
+          profile={profile}
+          onRefreshDashboard={fetchStudentData}
+          onNavigateTab={onTabChange}
+          onSelectJobForExplain={setSelectedJobForExplain}
+        />
       )}
 
       {/* 3. SKILL GAP ENGINE */}

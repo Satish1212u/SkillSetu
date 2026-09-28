@@ -1,12 +1,22 @@
-import { Skill } from '../types/models';
+import { Skill, StructuredResumeData } from '../types/models';
 import { CANONICAL_SKILLS, SKILL_ALIASES, normalizeSkillText } from '../data/taxonomy';
-import { parseResumeWithGemini, ParsedResumeAI } from './geminiService';
+import { parseResumeWithCentralizedAI } from './resumeParser';
+import { extractTextFromPdf } from './pdfExtractor';
 
 export interface ExtractedSkillResult {
   skill: Skill;
   extractedFromText: string;
   source: 'DICTIONARY' | 'AI_MODEL';
   confidence: number;
+}
+
+export interface HybridResumeAnalysisResult {
+  parsedResume: StructuredResumeData;
+  normalizedSkills: Skill[];
+  extractedText: string;
+  provider: 'gemini' | 'groq' | 'openrouter' | 'deterministic';
+  modelUsed: string;
+  fallbackUsed: boolean;
 }
 
 export class SkillExtractorService {
@@ -63,6 +73,7 @@ export class SkillExtractorService {
   public normalizeSkills(rawSkills: string[]): Skill[] {
     const unique = new Map<string, Skill>();
     for (const raw of rawSkills) {
+      if (!raw || typeof raw !== 'string') continue;
       const normalized = normalizeSkillText(raw);
       if (normalized && !unique.has(normalized.id)) {
         unique.set(normalized.id, normalized);
@@ -72,35 +83,73 @@ export class SkillExtractorService {
   }
 
   /**
-   * Hybrid deep resume extraction: Runs fast dictionary scan + Gemini 3.8 Flash
-   * to discover context, education, certifications, and projects.
+   * Complete End-to-End Resume Intelligence Pipeline:
+   * PDF/Text -> Text Extraction -> Centralized AI Parsing -> Skill Normalization -> Structured Result.
+   */
+  public async analyzeResume(options: {
+    resumeText?: string;
+    base64Pdf?: string;
+  }): Promise<HybridResumeAnalysisResult> {
+    let extractedText = options.resumeText || '';
+
+    // 1. If base64Pdf is provided, extract plain text using pdf extractor
+    if (options.base64Pdf) {
+      const pdfResult = await extractTextFromPdf(options.base64Pdf);
+      if (pdfResult.text && pdfResult.text.trim().length > 0) {
+        extractedText = pdfResult.text.trim();
+      }
+    }
+
+    // 2. Run Centralized AI Parsing (Gemini -> Groq -> OpenRouter -> Deterministic Fallback)
+    const aiResult = await parseResumeWithCentralizedAI(extractedText);
+
+    // 3. Collect all raw skills for normalization
+    const skillsToNormalize: string[] = [];
+
+    // Direct dictionary scan from text
+    const directResults = this.extractFromText(extractedText);
+    for (const res of directResults) {
+      skillsToNormalize.push(res.skill.canonicalName);
+    }
+
+    // Skills returned by AI parser
+    if (aiResult.parsedResume && Array.isArray(aiResult.parsedResume.skills)) {
+      for (const s of aiResult.parsedResume.skills) {
+        if (s.name) skillsToNormalize.push(s.name);
+      }
+    }
+
+    // 4. Pass through deterministic normalization system (deduplication & canonical mapping)
+    const normalizedSkills = this.normalizeSkills(skillsToNormalize);
+
+    return {
+      parsedResume: aiResult.parsedResume,
+      normalizedSkills,
+      extractedText,
+      provider: aiResult.provider,
+      modelUsed: aiResult.modelUsed,
+      fallbackUsed: aiResult.fallbackUsed,
+    };
+  }
+
+  /**
+   * Backward-compatible helper method
    */
   public async extractFromResumeHybrid(
     rawText: string,
     isBase64Pdf: boolean = false
   ): Promise<{
-    parsedAI: ParsedResumeAI | null;
+    parsedAI: any;
     normalizedSkills: Skill[];
   }> {
-    const aiParsed = await parseResumeWithGemini(rawText, isBase64Pdf);
-
-    const skillsToNormalize: string[] = [];
-
-    // Combine deterministic extraction from text with AI-extracted strings
-    const directResults = this.extractFromText(rawText);
-    for (const res of directResults) {
-      skillsToNormalize.push(res.skill.canonicalName);
-    }
-
-    if (aiParsed && Array.isArray(aiParsed.technicalSkills)) {
-      skillsToNormalize.push(...aiParsed.technicalSkills);
-    }
-
-    const normalizedSkills = this.normalizeSkills(skillsToNormalize);
+    const result = await this.analyzeResume({
+      resumeText: isBase64Pdf ? undefined : rawText,
+      base64Pdf: isBase64Pdf ? rawText : undefined,
+    });
 
     return {
-      parsedAI: aiParsed,
-      normalizedSkills,
+      parsedAI: result.parsedResume,
+      normalizedSkills: result.normalizedSkills,
     };
   }
 }

@@ -67,6 +67,62 @@ export const SEED_STUDENT_PROFILE: StudentProfile = {
     // Note: Missing AWS, Docker, Kubernetes, Terraform for Target DevOps Role!
   ],
   resumeFileName: 'Arjun_Sharma_DevOps_Resume_2026.pdf',
+  possibleRoles: ['DevOps / Cloud Engineer', 'Site Reliability Engineer (SRE)', 'Linux Systems Administrator'],
+  resumeData: {
+    candidate: {
+      name: 'Arjun Sharma',
+      email: 'arjun.sharma@sih.gov.in',
+      phone: '+91 98230 45678',
+      location: 'Pune, Maharashtra',
+    },
+    summary: 'Final year undergraduate passionate about cloud infrastructure, Linux systems administration, and automated CI/CD release engineering.',
+    education: [
+      {
+        degree: 'B.Tech in Computer Engineering',
+        institution: 'PICT Pune',
+        year: '2022-2026',
+      },
+    ],
+    skills: [
+      { name: 'Linux', category: 'technical', evidence: 'Ubuntu/Debian, shell scripting' },
+      { name: 'Git', category: 'tool', evidence: 'GitHub workflows, branching' },
+      { name: 'Python', category: 'technical', evidence: 'Automation scripting & backend shortener' },
+      { name: 'SQL', category: 'technical', evidence: 'PostgreSQL schema indexing' },
+      { name: 'Problem Solving & DSA', category: 'soft', evidence: 'Core data structures and algorithms' },
+    ],
+    experience: [
+      {
+        company: 'CloudOps Innovation Labs',
+        role: 'DevOps Intern',
+        duration: 'June 2025 - August 2025',
+        responsibilities: [
+          'Configured automated deployment pipelines for staging microservices.',
+          'Assisted senior engineers in monitoring production Linux nodes with Prometheus alerts.',
+        ],
+      },
+    ],
+    projects: [
+      {
+        name: 'Automated Server Health Monitor',
+        description: 'Built a background daemon monitoring memory, disk I/O and CPU thresholds; alerts via Slack Webhooks.',
+        technologies: ['Python', 'Bash', 'Linux', 'Slack API'],
+      },
+      {
+        name: 'High-Throughput URL Shortener',
+        description: 'Designed indexed database schemas and microsecond caching layer with Redis.',
+        technologies: ['Python', 'PostgreSQL', 'Redis', 'Docker'],
+      },
+    ],
+    certifications: [
+      'Linux Foundation Certified System Administrator (LFCS) Prep',
+      'Coursera Python for Everybody Specialization',
+    ],
+    possibleRoles: [
+      'DevOps / Cloud Engineer',
+      'Site Reliability Engineer (SRE)',
+      'Linux Systems Administrator',
+    ],
+  },
   resumeText: `Arjun Sharma
 Email: arjun.sharma@sih.gov.in | Phone: +91 98230 45678 | GitHub: github.com/arjun-devops
 PICT Pune - B.Tech Computer Engineering (2022-2026) | CGPA: 8.7

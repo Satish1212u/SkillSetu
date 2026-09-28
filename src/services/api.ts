@@ -1,6 +1,7 @@
 import {
   UserRole,
   StudentProfile,
+  ResumeUploadResponse,
   JobMatchResult,
   AssessmentSummary,
   SimulationScenario,
@@ -87,7 +88,7 @@ export const api = {
     }),
 
   uploadResume: (payload: { resumeText?: string; base64Pdf?: string; fileName?: string }) =>
-    request<any>('/api/student/resume/upload', {
+    request<ResumeUploadResponse>('/api/student/resume/upload', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),

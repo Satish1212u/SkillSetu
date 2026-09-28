@@ -280,6 +280,9 @@ function buildStudentDashboardData(profile: any) {
       education: profile.education,
       experienceLevel: profile.experienceLevel,
       bio: profile.bio,
+      resumeFileName: profile.resumeFileName,
+      resumeData: profile.resumeData,
+      possibleRoles: profile.possibleRoles || [],
       profileCompleteness: {
         pct: completenessPct,
         breakdown: {
@@ -522,21 +525,56 @@ studentRouter.post('/resume/upload', async (req: Request, res: Response) => {
       return;
     }
 
-    const rawContent = base64Pdf || resumeText;
-    const isPdf = Boolean(base64Pdf);
+    // Run complete extraction pipeline: PDF Extraction -> Centralized AI Router -> Skill Normalization
+    const analysis = await skillExtractor.analyzeResume({
+      resumeText: typeof resumeText === 'string' ? resumeText : undefined,
+      base64Pdf: typeof base64Pdf === 'string' ? base64Pdf : undefined,
+    });
 
-    const extraction = await skillExtractor.extractFromResumeHybrid(rawContent, isPdf);
+    const parsed = analysis.parsedResume;
 
-    // Save resume text and update student skills with normalized skills
+    // Save resume meta & structured data
     profile.resumeFileName = fileName || 'Uploaded_Resume.pdf';
-    profile.resumeText = resumeText || (extraction.parsedAI ? extraction.parsedAI.summary : 'Resume uploaded in PDF format.');
+    profile.resumeData = parsed;
+    profile.possibleRoles = parsed.possibleRoles || [];
 
-    const existingSkillIds = new Set(profile.skills.map(s => s.skillId));
+    // Keep internal resumeText for background search/indexing without exposing raw text unnecessarily
+    if (analysis.extractedText) {
+      profile.resumeText = analysis.extractedText;
+    } else if (resumeText) {
+      profile.resumeText = resumeText;
+    } else if (parsed.summary) {
+      profile.resumeText = parsed.summary;
+    }
 
+    // Safe Profile Merge: Never overwrite verified candidate data blindly
+    if (parsed.candidate?.name && parsed.candidate.name.trim().length > 1) {
+      const user = db.getUserById(profile.userId);
+      if (user && (!user.name || user.name === 'Student Candidate' || user.name === 'Default Student')) {
+        user.name = parsed.candidate.name.trim();
+        db.users.set(user.id, user);
+      }
+    }
+
+    // Merge Education carefully if empty
+    if (parsed.education && parsed.education.length > 0 && (!profile.education || profile.education.trim().length === 0)) {
+      profile.education = parsed.education
+        .map(e => `${e.degree || 'Degree'}${e.institution ? ` from ${e.institution}` : ''}${e.year ? ` (${e.year})` : ''}`)
+        .join('; ');
+    }
+
+    // Merge summary into bio if empty
+    if (parsed.summary && (!profile.bio || profile.bio.trim().length === 0)) {
+      profile.bio = parsed.summary;
+    }
+
+    // Merge Skills safely:
+    // Retain verified status and proficiency for existing skills. Add new normalized skills.
+    const existingSkillMap = new Map<string, StudentSkill>(profile.skills.map(s => [s.skillId, s]));
     const newlyAddedSkills: StudentSkill[] = [];
-    for (const skill of extraction.normalizedSkills) {
-      if (!existingSkillIds.has(skill.id)) {
-        existingSkillIds.add(skill.id);
+
+    for (const skill of analysis.normalizedSkills) {
+      if (!existingSkillMap.has(skill.id)) {
         const newStudentSkill: StudentSkill = {
           skillId: skill.id,
           proficiency: 'INTERMEDIATE',
@@ -545,21 +583,42 @@ studentRouter.post('/resume/upload', async (req: Request, res: Response) => {
           lastEvaluated: new Date().toISOString(),
         };
         profile.skills.push(newStudentSkill);
+        existingSkillMap.set(skill.id, newStudentSkill);
         newlyAddedSkills.push(newStudentSkill);
       }
     }
 
-    profile.profileCompletionPct = Math.min(100, profile.profileCompletionPct + 15);
+    // Recalculate profile completeness percentage
+    let completeness = 0;
+    if (profile.resumeText || profile.resumeData) completeness += 25;
+    if (profile.education) completeness += 20;
+    if (profile.skills.length >= 3) completeness += 30;
+    if (profile.targetRole) completeness += 15;
+    if (profile.preferredLocation) completeness += 10;
+    profile.profileCompletionPct = Math.min(100, Math.max(completeness, profile.profileCompletionPct));
+
     db.saveStudentProfile(profile);
 
+    // Calculate deterministic skill gaps & job matches for dashboard update
+    const roleGaps = matchingEngine.evaluateRoleSkillGaps(profile, profile.targetRole);
+    const allJobs = db.getAllJobs();
+    const matchedJobs = allJobs.map(job => matchingEngine.matchStudentToJob(profile, job));
+    matchedJobs.sort((a, b) => b.overallMatchPct - a.overallMatchPct);
+
     res.json({
-      message: `Resume parsed successfully. Extracted ${extraction.normalizedSkills.length} normalized skills (${newlyAddedSkills.length} new).`,
-      parsedAI: extraction.parsedAI,
-      normalizedSkills: extraction.normalizedSkills,
+      message: 'Resume analyzed successfully',
+      parsedResume: parsed,
+      normalizedSkills: analysis.normalizedSkills,
       newlyAddedCount: newlyAddedSkills.length,
       currentSkillsCount: profile.skills.length,
+      provider: analysis.provider,
+      modelUsed: analysis.modelUsed,
+      fallbackUsed: analysis.fallbackUsed,
+      roleGaps,
+      jobMatches: matchedJobs.slice(0, 5),
     });
   } catch (err: any) {
+    console.error('[Resume Upload API] Error:', err);
     res.status(500).json({ error: err.message || 'Resume parsing failed.' });
   }
 });

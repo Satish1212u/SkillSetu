@@ -1,161 +1,19 @@
-// backend/serverless.ts
-import dotenv2 from "dotenv";
-
-// backend/app.ts
-import express from "express";
-import dotenv from "dotenv";
-
-// backend/api/auth.ts
-import { Router } from "express";
-import jwt from "jsonwebtoken";
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res, err) => function __init() {
+  if (err) throw err[0];
+  try {
+    return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+  } catch (e) {
+    throw err = [e], e;
+  }
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 
 // backend/data/taxonomy.ts
-var CANONICAL_SKILLS = [
-  // Cloud & DevOps
-  { id: "sk-aws", canonicalName: "AWS", category: "Cloud & DevOps", description: "Amazon Web Services cloud architecture and services (EC2, S3, Lambda, IAM)", marketDemandLevel: "HIGH", averageSalaryBumpPct: 24 },
-  { id: "sk-docker", canonicalName: "Docker", category: "Cloud & DevOps", description: "Containerization, Dockerfile authoring, multi-stage builds and compose", marketDemandLevel: "HIGH", averageSalaryBumpPct: 20 },
-  { id: "sk-k8s", canonicalName: "Kubernetes", category: "Cloud & DevOps", description: "Container orchestration, Pods, Deployments, Services, Helm charts and ingress", marketDemandLevel: "HIGH", averageSalaryBumpPct: 28 },
-  { id: "sk-linux", canonicalName: "Linux", category: "Cloud & DevOps", description: "Unix/Linux system administration, shell scripting (Bash), permissions and networking", marketDemandLevel: "HIGH", averageSalaryBumpPct: 15 },
-  { id: "sk-git", canonicalName: "Git", category: "Cloud & DevOps", description: "Distributed version control, branching, PR workflows, merge resolution and CI hooks", marketDemandLevel: "HIGH", averageSalaryBumpPct: 12 },
-  { id: "sk-terraform", canonicalName: "Terraform", category: "Cloud & DevOps", description: "Infrastructure as Code (IaC), state management, HCL syntax and cloud provisioning", marketDemandLevel: "HIGH", averageSalaryBumpPct: 25 },
-  { id: "sk-ci-cd", canonicalName: "CI/CD Pipelines", category: "Cloud & DevOps", description: "Continuous integration and deployment with GitHub Actions, GitLab CI, or Jenkins", marketDemandLevel: "HIGH", averageSalaryBumpPct: 22 },
-  // AI & Data Science
-  { id: "sk-python", canonicalName: "Python", category: "AI & Data Science", description: "Python programming, data structures, libraries and automation", marketDemandLevel: "HIGH", averageSalaryBumpPct: 18 },
-  { id: "sk-genai", canonicalName: "Generative AI", category: "AI & Data Science", description: "LLMs, prompt engineering, RAG architectures, Gemini / OpenAI SDKs and agents", marketDemandLevel: "HIGH", averageSalaryBumpPct: 35 },
-  { id: "sk-ml", canonicalName: "Machine Learning", category: "AI & Data Science", description: "Supervised/unsupervised algorithms, scikit-learn, model evaluation and metrics", marketDemandLevel: "HIGH", averageSalaryBumpPct: 26 },
-  { id: "sk-nlp", canonicalName: "Natural Language Processing", category: "AI & Data Science", description: "Tokenization, embeddings, transformer models, semantic search and vector stores", marketDemandLevel: "HIGH", averageSalaryBumpPct: 27 },
-  { id: "sk-pytorch", canonicalName: "PyTorch", category: "AI & Data Science", description: "Deep learning neural networks, tensor computation, autograd and model fine-tuning", marketDemandLevel: "HIGH", averageSalaryBumpPct: 29 },
-  { id: "sk-sql", canonicalName: "SQL", category: "AI & Data Science", description: "Relational query design, indexing, window functions, CTEs and performance tuning", marketDemandLevel: "HIGH", averageSalaryBumpPct: 16 },
-  { id: "sk-data-eng", canonicalName: "Data Engineering", category: "AI & Data Science", description: "ETL/ELT pipelines, Apache Spark, Kafka streaming and data lakehouses", marketDemandLevel: "HIGH", averageSalaryBumpPct: 27 },
-  // Frontend
-  { id: "sk-react", canonicalName: "React", category: "Frontend", description: "React component lifecycle, hooks, state management, SPA architecture and Next.js", marketDemandLevel: "HIGH", averageSalaryBumpPct: 20 },
-  { id: "sk-typescript", canonicalName: "TypeScript", category: "Frontend", description: "Static typing, generics, interfaces, strict compiler rules and modern ES features", marketDemandLevel: "HIGH", averageSalaryBumpPct: 22 },
-  { id: "sk-tailwind", canonicalName: "Tailwind CSS", category: "Frontend", description: "Utility-first CSS framework, responsive design, dark mode and custom config", marketDemandLevel: "MEDIUM", averageSalaryBumpPct: 12 },
-  { id: "sk-javascript", canonicalName: "JavaScript", category: "Frontend", description: "Modern JavaScript (ES6+), event loop, closures, async/await and DOM manipulation", marketDemandLevel: "HIGH", averageSalaryBumpPct: 15 },
-  { id: "sk-html-css", canonicalName: "HTML5 & CSS3", category: "Frontend", description: "Semantic HTML markup, CSS flexbox, grid, animations and web accessibility (a11y)", marketDemandLevel: "MEDIUM", averageSalaryBumpPct: 10 },
-  // Backend
-  { id: "sk-nodejs", canonicalName: "Node.js", category: "Backend", description: "Server-side JavaScript runtime, event-driven I/O, Express and microservices", marketDemandLevel: "HIGH", averageSalaryBumpPct: 19 },
-  { id: "sk-fastapi", canonicalName: "FastAPI", category: "Backend", description: "Asynchronous Python web framework, Pydantic data validation and OpenAPI docs", marketDemandLevel: "HIGH", averageSalaryBumpPct: 21 },
-  { id: "sk-java", canonicalName: "Java", category: "Backend", description: "Object-oriented programming, Spring Boot enterprise frameworks and JVM tuning", marketDemandLevel: "HIGH", averageSalaryBumpPct: 18 },
-  { id: "sk-postgresql", canonicalName: "PostgreSQL", category: "Backend", description: "Advanced relational database, ACID transactions, JSONB and pgvector indexing", marketDemandLevel: "HIGH", averageSalaryBumpPct: 20 },
-  { id: "sk-rest-api", canonicalName: "RESTful API Design", category: "Backend", description: "HTTP verbs, idempotency, status codes, JWT authentication and rate limiting", marketDemandLevel: "HIGH", averageSalaryBumpPct: 15 },
-  { id: "sk-redis", canonicalName: "Redis", category: "Backend", description: "In-memory key-value caching, Pub/Sub messaging and session management", marketDemandLevel: "MEDIUM", averageSalaryBumpPct: 17 },
-  // Cybersecurity
-  { id: "sk-cybersec", canonicalName: "Cybersecurity", category: "Cybersecurity", description: "Threat modeling, network security, zero-trust architecture and vulnerability analysis", marketDemandLevel: "HIGH", averageSalaryBumpPct: 30 },
-  { id: "sk-owasp", canonicalName: "OWASP Top 10", category: "Cybersecurity", description: "Web application vulnerability remediation (SQLi, XSS, CSRF, auth bypass)", marketDemandLevel: "HIGH", averageSalaryBumpPct: 23 },
-  // Soft Skills & Leadership
-  { id: "sk-problem-solving", canonicalName: "Problem Solving & DSA", category: "Soft Skills & Leadership", description: "Data structures, algorithms, asymptotic analysis and competitive programming", marketDemandLevel: "HIGH", averageSalaryBumpPct: 22 },
-  { id: "sk-agile", canonicalName: "Agile & Scrum", category: "Soft Skills & Leadership", description: "Sprint planning, backlog grooming, standups, retrospectives and Jira", marketDemandLevel: "MEDIUM", averageSalaryBumpPct: 12 },
-  { id: "sk-comm", canonicalName: "Technical Communication", category: "Soft Skills & Leadership", description: "Cross-functional engineering communication, design docs and stakeholder presentations", marketDemandLevel: "HIGH", averageSalaryBumpPct: 16 }
-];
-var SKILL_ALIASES = [
-  // React
-  { skillId: "sk-react", alias: "react" },
-  { skillId: "sk-react", alias: "reactjs" },
-  { skillId: "sk-react", alias: "react.js" },
-  { skillId: "sk-react", alias: "react js" },
-  { skillId: "sk-react", alias: "react native" },
-  // AWS
-  { skillId: "sk-aws", alias: "aws" },
-  { skillId: "sk-aws", alias: "aws cloud" },
-  { skillId: "sk-aws", alias: "amazon web services" },
-  { skillId: "sk-aws", alias: "ec2" },
-  { skillId: "sk-aws", alias: "s3" },
-  { skillId: "sk-aws", alias: "aws lambda" },
-  // Kubernetes
-  { skillId: "sk-k8s", alias: "kubernetes" },
-  { skillId: "sk-k8s", alias: "k8s" },
-  { skillId: "sk-k8s", alias: "kube" },
-  // Docker
-  { skillId: "sk-docker", alias: "docker" },
-  { skillId: "sk-docker", alias: "docker compose" },
-  { skillId: "sk-docker", alias: "containerization" },
-  // Linux
-  { skillId: "sk-linux", alias: "linux" },
-  { skillId: "sk-linux", alias: "bash" },
-  { skillId: "sk-linux", alias: "shell scripting" },
-  { skillId: "sk-linux", alias: "ubuntu" },
-  { skillId: "sk-linux", alias: "unix" },
-  // Git
-  { skillId: "sk-git", alias: "git" },
-  { skillId: "sk-git", alias: "github" },
-  { skillId: "sk-git", alias: "version control" },
-  { skillId: "sk-git", alias: "gitlab" },
-  // Python
-  { skillId: "sk-python", alias: "python" },
-  { skillId: "sk-python", alias: "python3" },
-  { skillId: "sk-python", alias: "py" },
-  // GenAI
-  { skillId: "sk-genai", alias: "generative ai" },
-  { skillId: "sk-genai", alias: "genai" },
-  { skillId: "sk-genai", alias: "gen ai" },
-  { skillId: "sk-genai", alias: "llms" },
-  { skillId: "sk-genai", alias: "llm" },
-  { skillId: "sk-genai", alias: "large language models" },
-  { skillId: "sk-genai", alias: "rag" },
-  { skillId: "sk-genai", alias: "prompt engineering" },
-  { skillId: "sk-genai", alias: "gemini" },
-  // Machine Learning
-  { skillId: "sk-ml", alias: "machine learning" },
-  { skillId: "sk-ml", alias: "ml" },
-  { skillId: "sk-ml", alias: "scikit-learn" },
-  { skillId: "sk-ml", alias: "sklearn" },
-  // PyTorch
-  { skillId: "sk-pytorch", alias: "pytorch" },
-  { skillId: "sk-pytorch", alias: "torch" },
-  { skillId: "sk-pytorch", alias: "deep learning" },
-  { skillId: "sk-pytorch", alias: "tensorflow" },
-  // PostgreSQL
-  { skillId: "sk-postgresql", alias: "postgresql" },
-  { skillId: "sk-postgresql", alias: "postgres" },
-  { skillId: "sk-postgresql", alias: "psql" },
-  { skillId: "sk-postgresql", alias: "pg" },
-  // TypeScript
-  { skillId: "sk-typescript", alias: "typescript" },
-  { skillId: "sk-typescript", alias: "ts" },
-  // JavaScript
-  { skillId: "sk-javascript", alias: "javascript" },
-  { skillId: "sk-javascript", alias: "js" },
-  { skillId: "sk-javascript", alias: "es6" },
-  // Node.js
-  { skillId: "sk-nodejs", alias: "nodejs" },
-  { skillId: "sk-nodejs", alias: "node.js" },
-  { skillId: "sk-nodejs", alias: "node" },
-  { skillId: "sk-nodejs", alias: "express" },
-  { skillId: "sk-nodejs", alias: "express.js" },
-  // FastAPI
-  { skillId: "sk-fastapi", alias: "fastapi" },
-  { skillId: "sk-fastapi", alias: "fast api" },
-  // Terraform
-  { skillId: "sk-terraform", alias: "terraform" },
-  { skillId: "sk-terraform", alias: "iac" },
-  { skillId: "sk-terraform", alias: "infrastructure as code" },
-  // CI/CD
-  { skillId: "sk-ci-cd", alias: "ci/cd" },
-  { skillId: "sk-ci-cd", alias: "cicd" },
-  { skillId: "sk-ci-cd", alias: "continuous integration" },
-  { skillId: "sk-ci-cd", alias: "github actions" },
-  { skillId: "sk-ci-cd", alias: "jenkins" },
-  // Tailwind
-  { skillId: "sk-tailwind", alias: "tailwind" },
-  { skillId: "sk-tailwind", alias: "tailwindcss" },
-  { skillId: "sk-tailwind", alias: "tailwind css" },
-  // SQL
-  { skillId: "sk-sql", alias: "sql" },
-  { skillId: "sk-sql", alias: "mysql" },
-  { skillId: "sk-sql", alias: "rdbms" },
-  // Data Engineering
-  { skillId: "sk-data-eng", alias: "data engineering" },
-  { skillId: "sk-data-eng", alias: "spark" },
-  { skillId: "sk-data-eng", alias: "apache spark" },
-  { skillId: "sk-data-eng", alias: "kafka" },
-  { skillId: "sk-data-eng", alias: "etl" },
-  // Cybersecurity
-  { skillId: "sk-cybersec", alias: "cybersecurity" },
-  { skillId: "sk-cybersec", alias: "cyber security" },
-  { skillId: "sk-cybersec", alias: "infosec" },
-  { skillId: "sk-cybersec", alias: "ethical hacking" }
-];
 function normalizeSkillText(rawSkill) {
   if (!rawSkill || typeof rawSkill !== "string") return null;
   const clean = rawSkill.trim().toLowerCase();
@@ -179,65 +37,294 @@ function normalizeSkillText(rawSkill) {
   }
   return null;
 }
+var CANONICAL_SKILLS, SKILL_ALIASES;
+var init_taxonomy = __esm({
+  "backend/data/taxonomy.ts"() {
+    CANONICAL_SKILLS = [
+      // Cloud & DevOps
+      { id: "sk-aws", canonicalName: "AWS", category: "Cloud & DevOps", description: "Amazon Web Services cloud architecture and services (EC2, S3, Lambda, IAM)", marketDemandLevel: "HIGH", averageSalaryBumpPct: 24 },
+      { id: "sk-docker", canonicalName: "Docker", category: "Cloud & DevOps", description: "Containerization, Dockerfile authoring, multi-stage builds and compose", marketDemandLevel: "HIGH", averageSalaryBumpPct: 20 },
+      { id: "sk-k8s", canonicalName: "Kubernetes", category: "Cloud & DevOps", description: "Container orchestration, Pods, Deployments, Services, Helm charts and ingress", marketDemandLevel: "HIGH", averageSalaryBumpPct: 28 },
+      { id: "sk-linux", canonicalName: "Linux", category: "Cloud & DevOps", description: "Unix/Linux system administration, shell scripting (Bash), permissions and networking", marketDemandLevel: "HIGH", averageSalaryBumpPct: 15 },
+      { id: "sk-git", canonicalName: "Git", category: "Cloud & DevOps", description: "Distributed version control, branching, PR workflows, merge resolution and CI hooks", marketDemandLevel: "HIGH", averageSalaryBumpPct: 12 },
+      { id: "sk-terraform", canonicalName: "Terraform", category: "Cloud & DevOps", description: "Infrastructure as Code (IaC), state management, HCL syntax and cloud provisioning", marketDemandLevel: "HIGH", averageSalaryBumpPct: 25 },
+      { id: "sk-ci-cd", canonicalName: "CI/CD Pipelines", category: "Cloud & DevOps", description: "Continuous integration and deployment with GitHub Actions, GitLab CI, or Jenkins", marketDemandLevel: "HIGH", averageSalaryBumpPct: 22 },
+      // AI & Data Science
+      { id: "sk-python", canonicalName: "Python", category: "AI & Data Science", description: "Python programming, data structures, libraries and automation", marketDemandLevel: "HIGH", averageSalaryBumpPct: 18 },
+      { id: "sk-genai", canonicalName: "Generative AI", category: "AI & Data Science", description: "LLMs, prompt engineering, RAG architectures, Gemini / OpenAI SDKs and agents", marketDemandLevel: "HIGH", averageSalaryBumpPct: 35 },
+      { id: "sk-ml", canonicalName: "Machine Learning", category: "AI & Data Science", description: "Supervised/unsupervised algorithms, scikit-learn, model evaluation and metrics", marketDemandLevel: "HIGH", averageSalaryBumpPct: 26 },
+      { id: "sk-nlp", canonicalName: "Natural Language Processing", category: "AI & Data Science", description: "Tokenization, embeddings, transformer models, semantic search and vector stores", marketDemandLevel: "HIGH", averageSalaryBumpPct: 27 },
+      { id: "sk-pytorch", canonicalName: "PyTorch", category: "AI & Data Science", description: "Deep learning neural networks, tensor computation, autograd and model fine-tuning", marketDemandLevel: "HIGH", averageSalaryBumpPct: 29 },
+      { id: "sk-sql", canonicalName: "SQL", category: "AI & Data Science", description: "Relational query design, indexing, window functions, CTEs and performance tuning", marketDemandLevel: "HIGH", averageSalaryBumpPct: 16 },
+      { id: "sk-data-eng", canonicalName: "Data Engineering", category: "AI & Data Science", description: "ETL/ELT pipelines, Apache Spark, Kafka streaming and data lakehouses", marketDemandLevel: "HIGH", averageSalaryBumpPct: 27 },
+      // Frontend
+      { id: "sk-react", canonicalName: "React", category: "Frontend", description: "React component lifecycle, hooks, state management, SPA architecture and Next.js", marketDemandLevel: "HIGH", averageSalaryBumpPct: 20 },
+      { id: "sk-typescript", canonicalName: "TypeScript", category: "Frontend", description: "Static typing, generics, interfaces, strict compiler rules and modern ES features", marketDemandLevel: "HIGH", averageSalaryBumpPct: 22 },
+      { id: "sk-tailwind", canonicalName: "Tailwind CSS", category: "Frontend", description: "Utility-first CSS framework, responsive design, dark mode and custom config", marketDemandLevel: "MEDIUM", averageSalaryBumpPct: 12 },
+      { id: "sk-javascript", canonicalName: "JavaScript", category: "Frontend", description: "Modern JavaScript (ES6+), event loop, closures, async/await and DOM manipulation", marketDemandLevel: "HIGH", averageSalaryBumpPct: 15 },
+      { id: "sk-html-css", canonicalName: "HTML5 & CSS3", category: "Frontend", description: "Semantic HTML markup, CSS flexbox, grid, animations and web accessibility (a11y)", marketDemandLevel: "MEDIUM", averageSalaryBumpPct: 10 },
+      // Backend
+      { id: "sk-nodejs", canonicalName: "Node.js", category: "Backend", description: "Server-side JavaScript runtime, event-driven I/O, Express and microservices", marketDemandLevel: "HIGH", averageSalaryBumpPct: 19 },
+      { id: "sk-fastapi", canonicalName: "FastAPI", category: "Backend", description: "Asynchronous Python web framework, Pydantic data validation and OpenAPI docs", marketDemandLevel: "HIGH", averageSalaryBumpPct: 21 },
+      { id: "sk-java", canonicalName: "Java", category: "Backend", description: "Object-oriented programming, Spring Boot enterprise frameworks and JVM tuning", marketDemandLevel: "HIGH", averageSalaryBumpPct: 18 },
+      { id: "sk-postgresql", canonicalName: "PostgreSQL", category: "Backend", description: "Advanced relational database, ACID transactions, JSONB and pgvector indexing", marketDemandLevel: "HIGH", averageSalaryBumpPct: 20 },
+      { id: "sk-rest-api", canonicalName: "RESTful API Design", category: "Backend", description: "HTTP verbs, idempotency, status codes, JWT authentication and rate limiting", marketDemandLevel: "HIGH", averageSalaryBumpPct: 15 },
+      { id: "sk-redis", canonicalName: "Redis", category: "Backend", description: "In-memory key-value caching, Pub/Sub messaging and session management", marketDemandLevel: "MEDIUM", averageSalaryBumpPct: 17 },
+      // Cybersecurity
+      { id: "sk-cybersec", canonicalName: "Cybersecurity", category: "Cybersecurity", description: "Threat modeling, network security, zero-trust architecture and vulnerability analysis", marketDemandLevel: "HIGH", averageSalaryBumpPct: 30 },
+      { id: "sk-owasp", canonicalName: "OWASP Top 10", category: "Cybersecurity", description: "Web application vulnerability remediation (SQLi, XSS, CSRF, auth bypass)", marketDemandLevel: "HIGH", averageSalaryBumpPct: 23 },
+      // Soft Skills & Leadership
+      { id: "sk-testing", canonicalName: "Testing", category: "Frontend", description: "Unit testing, integration testing, React Testing Library, Jest, and Cypress", marketDemandLevel: "HIGH", averageSalaryBumpPct: 18 },
+      { id: "sk-problem-solving", canonicalName: "Problem Solving & DSA", category: "Soft Skills & Leadership", description: "Data structures, algorithms, asymptotic analysis and competitive programming", marketDemandLevel: "HIGH", averageSalaryBumpPct: 22 },
+      { id: "sk-agile", canonicalName: "Agile & Scrum", category: "Soft Skills & Leadership", description: "Sprint planning, backlog grooming, standups, retrospectives and Jira", marketDemandLevel: "MEDIUM", averageSalaryBumpPct: 12 },
+      { id: "sk-comm", canonicalName: "Technical Communication", category: "Soft Skills & Leadership", description: "Cross-functional engineering communication, design docs and stakeholder presentations", marketDemandLevel: "HIGH", averageSalaryBumpPct: 16 }
+    ];
+    SKILL_ALIASES = [
+      // React
+      { skillId: "sk-react", alias: "react" },
+      { skillId: "sk-react", alias: "reactjs" },
+      { skillId: "sk-react", alias: "react.js" },
+      { skillId: "sk-react", alias: "react js" },
+      { skillId: "sk-react", alias: "react native" },
+      // AWS
+      { skillId: "sk-aws", alias: "aws" },
+      { skillId: "sk-aws", alias: "aws cloud" },
+      { skillId: "sk-aws", alias: "amazon web services" },
+      { skillId: "sk-aws", alias: "ec2" },
+      { skillId: "sk-aws", alias: "s3" },
+      { skillId: "sk-aws", alias: "aws lambda" },
+      // Kubernetes
+      { skillId: "sk-k8s", alias: "kubernetes" },
+      { skillId: "sk-k8s", alias: "k8s" },
+      { skillId: "sk-k8s", alias: "kube" },
+      // Docker
+      { skillId: "sk-docker", alias: "docker" },
+      { skillId: "sk-docker", alias: "docker compose" },
+      { skillId: "sk-docker", alias: "containerization" },
+      // Linux
+      { skillId: "sk-linux", alias: "linux" },
+      { skillId: "sk-linux", alias: "bash" },
+      { skillId: "sk-linux", alias: "shell scripting" },
+      { skillId: "sk-linux", alias: "ubuntu" },
+      { skillId: "sk-linux", alias: "unix" },
+      // Git
+      { skillId: "sk-git", alias: "git" },
+      { skillId: "sk-git", alias: "github" },
+      { skillId: "sk-git", alias: "version control" },
+      { skillId: "sk-git", alias: "gitlab" },
+      // Python
+      { skillId: "sk-python", alias: "python" },
+      { skillId: "sk-python", alias: "python3" },
+      { skillId: "sk-python", alias: "py" },
+      // GenAI
+      { skillId: "sk-genai", alias: "generative ai" },
+      { skillId: "sk-genai", alias: "genai" },
+      { skillId: "sk-genai", alias: "gen ai" },
+      { skillId: "sk-genai", alias: "llms" },
+      { skillId: "sk-genai", alias: "llm" },
+      { skillId: "sk-genai", alias: "large language models" },
+      { skillId: "sk-genai", alias: "rag" },
+      { skillId: "sk-genai", alias: "prompt engineering" },
+      { skillId: "sk-genai", alias: "gemini" },
+      // Machine Learning
+      { skillId: "sk-ml", alias: "machine learning" },
+      { skillId: "sk-ml", alias: "ml" },
+      { skillId: "sk-ml", alias: "scikit-learn" },
+      { skillId: "sk-ml", alias: "sklearn" },
+      // PyTorch
+      { skillId: "sk-pytorch", alias: "pytorch" },
+      { skillId: "sk-pytorch", alias: "torch" },
+      { skillId: "sk-pytorch", alias: "deep learning" },
+      { skillId: "sk-pytorch", alias: "tensorflow" },
+      // PostgreSQL
+      { skillId: "sk-postgresql", alias: "postgresql" },
+      { skillId: "sk-postgresql", alias: "postgres" },
+      { skillId: "sk-postgresql", alias: "psql" },
+      { skillId: "sk-postgresql", alias: "pg" },
+      // TypeScript
+      { skillId: "sk-typescript", alias: "typescript" },
+      { skillId: "sk-typescript", alias: "ts" },
+      // JavaScript
+      { skillId: "sk-javascript", alias: "javascript" },
+      { skillId: "sk-javascript", alias: "js" },
+      { skillId: "sk-javascript", alias: "es6" },
+      // Node.js
+      { skillId: "sk-nodejs", alias: "nodejs" },
+      { skillId: "sk-nodejs", alias: "node.js" },
+      { skillId: "sk-nodejs", alias: "node" },
+      { skillId: "sk-nodejs", alias: "express" },
+      { skillId: "sk-nodejs", alias: "express.js" },
+      // FastAPI
+      { skillId: "sk-fastapi", alias: "fastapi" },
+      { skillId: "sk-fastapi", alias: "fast api" },
+      // Terraform
+      { skillId: "sk-terraform", alias: "terraform" },
+      { skillId: "sk-terraform", alias: "iac" },
+      { skillId: "sk-terraform", alias: "infrastructure as code" },
+      // CI/CD
+      { skillId: "sk-ci-cd", alias: "ci/cd" },
+      { skillId: "sk-ci-cd", alias: "cicd" },
+      { skillId: "sk-ci-cd", alias: "continuous integration" },
+      { skillId: "sk-ci-cd", alias: "github actions" },
+      { skillId: "sk-ci-cd", alias: "jenkins" },
+      // Tailwind
+      { skillId: "sk-tailwind", alias: "tailwind" },
+      { skillId: "sk-tailwind", alias: "tailwindcss" },
+      { skillId: "sk-tailwind", alias: "tailwind css" },
+      // SQL
+      { skillId: "sk-sql", alias: "sql" },
+      { skillId: "sk-sql", alias: "mysql" },
+      { skillId: "sk-sql", alias: "rdbms" },
+      // Data Engineering
+      { skillId: "sk-data-eng", alias: "data engineering" },
+      { skillId: "sk-data-eng", alias: "spark" },
+      { skillId: "sk-data-eng", alias: "apache spark" },
+      { skillId: "sk-data-eng", alias: "kafka" },
+      { skillId: "sk-data-eng", alias: "etl" },
+      // Cybersecurity
+      { skillId: "sk-cybersec", alias: "cybersecurity" },
+      { skillId: "sk-cybersec", alias: "cyber security" },
+      { skillId: "sk-cybersec", alias: "infosec" },
+      { skillId: "sk-cybersec", alias: "ethical hacking" },
+      // HTML & CSS
+      { skillId: "sk-html-css", alias: "html" },
+      { skillId: "sk-html-css", alias: "html5" },
+      { skillId: "sk-html-css", alias: "css" },
+      { skillId: "sk-html-css", alias: "css3" },
+      { skillId: "sk-html-css", alias: "html/css" },
+      { skillId: "sk-html-css", alias: "html and css" },
+      // Testing
+      { skillId: "sk-testing", alias: "testing" },
+      { skillId: "sk-testing", alias: "unit testing" },
+      { skillId: "sk-testing", alias: "software testing" },
+      { skillId: "sk-testing", alias: "react testing library" },
+      { skillId: "sk-testing", alias: "jest" },
+      { skillId: "sk-testing", alias: "cypress" },
+      { skillId: "sk-testing", alias: "qa" },
+      // CI/CD additional aliases
+      { skillId: "sk-ci-cd", alias: "ci/cd fundamentals" },
+      { skillId: "sk-ci-cd", alias: "continuous deployment" }
+    ];
+  }
+});
 
 // backend/data/seedData.ts
-var SEED_USERS = [
-  {
-    id: "usr-student-1",
-    email: "arjun.sharma@sih.gov.in",
-    passwordHash: "argon_dummy_hash_student",
-    role: "STUDENT",
-    name: "Arjun Sharma",
-    organizationName: "PICT Pune (Computer Engg 2026)",
-    createdAt: "2026-01-15T09:00:00Z"
-  },
-  {
-    id: "usr-institute-1",
-    email: "dean.academic@pict.ac.in",
-    passwordHash: "argon_dummy_hash_institute",
-    role: "INSTITUTE",
-    name: "Prof. Ramesh Kulkarni",
-    organizationName: "Pune Institute of Computer Technology (PICT)",
-    createdAt: "2025-11-01T10:30:00Z"
-  },
-  {
-    id: "usr-employer-1",
-    email: "talent@razorpay.com",
-    passwordHash: "argon_dummy_hash_employer",
-    role: "EMPLOYER",
-    name: "Priya Sundaram",
-    organizationName: "Razorpay Software Pvt Ltd",
-    createdAt: "2025-12-10T14:20:00Z"
-  },
-  {
-    id: "usr-admin-1",
-    email: "director.skill@msde.gov.in",
-    passwordHash: "argon_dummy_hash_admin",
-    role: "ADMIN",
-    name: "Dr. Sunita Deshmukh",
-    organizationName: "Ministry of Skill Development & Entrepreneurship (MSDE)",
-    createdAt: "2025-08-01T08:00:00Z"
-  }
-];
-var SEED_STUDENT_PROFILE = {
-  id: "stu-profile-1",
-  userId: "usr-student-1",
-  targetRole: "DevOps / Cloud Engineer",
-  preferredLocation: "Bengaluru, Karnataka / Pune, Maharashtra",
-  experienceLevel: "Fresher (0-1 yrs)",
-  education: "B.Tech in Computer Engineering (2022-2026), GPA 8.7/10",
-  bio: "Final year undergraduate passionate about cloud infrastructure, Linux systems administration, and automated CI/CD release engineering.",
-  profileCompletionPct: 85,
-  skills: [
-    { skillId: "sk-linux", proficiency: "INTERMEDIATE", verified: true, source: "RESUME" },
-    { skillId: "sk-git", proficiency: "ADVANCED", verified: true, source: "ASSESSMENT" },
-    { skillId: "sk-python", proficiency: "INTERMEDIATE", verified: true, source: "RESUME" },
-    { skillId: "sk-sql", proficiency: "INTERMEDIATE", verified: false, source: "SELF" },
-    { skillId: "sk-problem-solving", proficiency: "INTERMEDIATE", verified: true, source: "ASSESSMENT" }
-    // Note: Missing AWS, Docker, Kubernetes, Terraform for Target DevOps Role!
-  ],
-  resumeFileName: "Arjun_Sharma_DevOps_Resume_2026.pdf",
-  resumeText: `Arjun Sharma
+var SEED_USERS, SEED_STUDENT_PROFILE, SEED_JOBS, SEED_COURSES, SEED_CURRICULA, SEED_STATE_DEMANDS, SEED_ASSESSMENTS, SEED_EMPLOYER_SURVEYS, SEED_RECOMMENDATIONS;
+var init_seedData = __esm({
+  "backend/data/seedData.ts"() {
+    SEED_USERS = [
+      {
+        id: "usr-student-1",
+        email: "arjun.sharma@sih.gov.in",
+        passwordHash: "argon_dummy_hash_student",
+        role: "STUDENT",
+        name: "Arjun Sharma",
+        organizationName: "PICT Pune (Computer Engg 2026)",
+        createdAt: "2026-01-15T09:00:00Z"
+      },
+      {
+        id: "usr-institute-1",
+        email: "dean.academic@pict.ac.in",
+        passwordHash: "argon_dummy_hash_institute",
+        role: "INSTITUTE",
+        name: "Prof. Ramesh Kulkarni",
+        organizationName: "Pune Institute of Computer Technology (PICT)",
+        createdAt: "2025-11-01T10:30:00Z"
+      },
+      {
+        id: "usr-employer-1",
+        email: "talent@razorpay.com",
+        passwordHash: "argon_dummy_hash_employer",
+        role: "EMPLOYER",
+        name: "Priya Sundaram",
+        organizationName: "Razorpay Software Pvt Ltd",
+        createdAt: "2025-12-10T14:20:00Z"
+      },
+      {
+        id: "usr-admin-1",
+        email: "director.skill@msde.gov.in",
+        passwordHash: "argon_dummy_hash_admin",
+        role: "ADMIN",
+        name: "Dr. Sunita Deshmukh",
+        organizationName: "Ministry of Skill Development & Entrepreneurship (MSDE)",
+        createdAt: "2025-08-01T08:00:00Z"
+      }
+    ];
+    SEED_STUDENT_PROFILE = {
+      id: "stu-profile-1",
+      userId: "usr-student-1",
+      targetRole: "DevOps / Cloud Engineer",
+      preferredLocation: "Bengaluru, Karnataka / Pune, Maharashtra",
+      experienceLevel: "Fresher (0-1 yrs)",
+      education: "B.Tech in Computer Engineering (2022-2026), GPA 8.7/10",
+      bio: "Final year undergraduate passionate about cloud infrastructure, Linux systems administration, and automated CI/CD release engineering.",
+      profileCompletionPct: 85,
+      skills: [
+        { skillId: "sk-linux", proficiency: "INTERMEDIATE", verified: true, source: "RESUME" },
+        { skillId: "sk-git", proficiency: "ADVANCED", verified: true, source: "ASSESSMENT" },
+        { skillId: "sk-python", proficiency: "INTERMEDIATE", verified: true, source: "RESUME" },
+        { skillId: "sk-sql", proficiency: "INTERMEDIATE", verified: false, source: "SELF" },
+        { skillId: "sk-problem-solving", proficiency: "INTERMEDIATE", verified: true, source: "ASSESSMENT" }
+        // Note: Missing AWS, Docker, Kubernetes, Terraform for Target DevOps Role!
+      ],
+      resumeFileName: "Arjun_Sharma_DevOps_Resume_2026.pdf",
+      possibleRoles: ["DevOps / Cloud Engineer", "Site Reliability Engineer (SRE)", "Linux Systems Administrator"],
+      resumeData: {
+        candidate: {
+          name: "Arjun Sharma",
+          email: "arjun.sharma@sih.gov.in",
+          phone: "+91 98230 45678",
+          location: "Pune, Maharashtra"
+        },
+        summary: "Final year undergraduate passionate about cloud infrastructure, Linux systems administration, and automated CI/CD release engineering.",
+        education: [
+          {
+            degree: "B.Tech in Computer Engineering",
+            institution: "PICT Pune",
+            year: "2022-2026"
+          }
+        ],
+        skills: [
+          { name: "Linux", category: "technical", evidence: "Ubuntu/Debian, shell scripting" },
+          { name: "Git", category: "tool", evidence: "GitHub workflows, branching" },
+          { name: "Python", category: "technical", evidence: "Automation scripting & backend shortener" },
+          { name: "SQL", category: "technical", evidence: "PostgreSQL schema indexing" },
+          { name: "Problem Solving & DSA", category: "soft", evidence: "Core data structures and algorithms" }
+        ],
+        experience: [
+          {
+            company: "CloudOps Innovation Labs",
+            role: "DevOps Intern",
+            duration: "June 2025 - August 2025",
+            responsibilities: [
+              "Configured automated deployment pipelines for staging microservices.",
+              "Assisted senior engineers in monitoring production Linux nodes with Prometheus alerts."
+            ]
+          }
+        ],
+        projects: [
+          {
+            name: "Automated Server Health Monitor",
+            description: "Built a background daemon monitoring memory, disk I/O and CPU thresholds; alerts via Slack Webhooks.",
+            technologies: ["Python", "Bash", "Linux", "Slack API"]
+          },
+          {
+            name: "High-Throughput URL Shortener",
+            description: "Designed indexed database schemas and microsecond caching layer with Redis.",
+            technologies: ["Python", "PostgreSQL", "Redis", "Docker"]
+          }
+        ],
+        certifications: [
+          "Linux Foundation Certified System Administrator (LFCS) Prep",
+          "Coursera Python for Everybody Specialization"
+        ],
+        possibleRoles: [
+          "DevOps / Cloud Engineer",
+          "Site Reliability Engineer (SRE)",
+          "Linux Systems Administrator"
+        ]
+      },
+      resumeText: `Arjun Sharma
 Email: arjun.sharma@sih.gov.in | Phone: +91 98230 45678 | GitHub: github.com/arjun-devops
 PICT Pune - B.Tech Computer Engineering (2022-2026) | CGPA: 8.7
 
@@ -251,199 +338,199 @@ PROJECTS:
 Built a daemon monitoring memory, disk I/O and CPU thresholds; alerts via Slack Webhooks.
 2. High-Throughput URL Shortener (Python, PostgreSQL, Redis)
 Designed indexed database schemas and microsecond caching layer.`,
-  savedRoadmapProgress: {
-    "mod-docker-basics": true,
-    "mod-docker-compose": false,
-    "mod-aws-core": false,
-    "mod-k8s-pods": false
-  }
-};
-var SEED_JOBS = [
-  {
-    id: "job-1",
-    employerId: "usr-employer-1",
-    employerName: "Razorpay",
-    title: "Associate DevOps Engineer (Platform Team)",
-    roleCategory: "DevOps / Cloud Engineer",
-    locationCity: "Bengaluru",
-    locationState: "Karnataka",
-    experienceMinYears: 0,
-    salaryMinLPA: 12,
-    salaryMaxLPA: 18,
-    description: "Join our cloud infrastructure team managing high-scale payment gateways processing millions of transactions. You will build resilient Docker images, maintain AWS EKS clusters, and automate Terraform modules.",
-    postedAt: "2026-03-01T10:00:00Z",
-    dataSource: "REAL VERIFIED",
-    skills: [
-      { skillId: "sk-linux", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-git", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-docker", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-aws", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-k8s", isRequired: false, minProficiency: "BEGINNER" },
-      { skillId: "sk-terraform", isRequired: false, minProficiency: "BEGINNER" }
-    ]
-  },
-  {
-    id: "job-2",
-    employerId: "emp-persistent",
-    employerName: "Persistent Systems",
-    title: "Cloud Systems Engineer (AWS/GCP)",
-    roleCategory: "DevOps / Cloud Engineer",
-    locationCity: "Pune",
-    locationState: "Maharashtra",
-    experienceMinYears: 1,
-    salaryMinLPA: 8.5,
-    salaryMaxLPA: 14,
-    description: "Responsible for client cloud migrations, multi-tenant container orchestration, and continuous integration pipelines.",
-    postedAt: "2026-03-12T11:30:00Z",
-    dataSource: "SAMPLE BENCHMARK",
-    skills: [
-      { skillId: "sk-aws", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-docker", isRequired: true, minProficiency: "BEGINNER" },
-      { skillId: "sk-linux", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-ci-cd", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-python", isRequired: false, minProficiency: "INTERMEDIATE" }
-    ]
-  },
-  {
-    id: "job-3",
-    employerId: "emp-swiggy",
-    employerName: "Swiggy Tech",
-    title: "Backend Platform Engineer (Python / Go)",
-    roleCategory: "Backend Developer",
-    locationCity: "Hyderabad",
-    locationState: "Telangana",
-    experienceMinYears: 1,
-    salaryMinLPA: 14,
-    salaryMaxLPA: 22,
-    description: "Scale our order dispatch microservices handling 100k requests/sec. Experience with asynchronous Python, PostgreSQL clustering, and distributed caching.",
-    postedAt: "2026-03-18T16:00:00Z",
-    dataSource: "SAMPLE BENCHMARK",
-    skills: [
-      { skillId: "sk-python", isRequired: true, minProficiency: "ADVANCED" },
-      { skillId: "sk-postgresql", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-redis", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-rest-api", isRequired: true, minProficiency: "ADVANCED" },
-      { skillId: "sk-docker", isRequired: false, minProficiency: "BEGINNER" }
-    ]
-  },
-  {
-    id: "job-4",
-    employerId: "emp-tata",
-    employerName: "Tata Elxsi",
-    title: "GenAI & Applied ML Specialist",
-    roleCategory: "AI / ML Engineer",
-    locationCity: "Bengaluru",
-    locationState: "Karnataka",
-    experienceMinYears: 0,
-    salaryMinLPA: 11,
-    salaryMaxLPA: 19,
-    description: "Build enterprise retrieval-augmented generation (RAG) agents, LLM tool-calling pipelines, and vector database indices.",
-    postedAt: "2026-03-20T08:45:00Z",
-    dataSource: "SAMPLE BENCHMARK",
-    skills: [
-      { skillId: "sk-python", isRequired: true, minProficiency: "ADVANCED" },
-      { skillId: "sk-genai", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-nlp", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-pytorch", isRequired: false, minProficiency: "BEGINNER" },
-      { skillId: "sk-sql", isRequired: true, minProficiency: "INTERMEDIATE" }
-    ]
-  },
-  {
-    id: "job-5",
-    employerId: "emp-cred",
-    employerName: "CRED",
-    title: "Frontend Product Engineer (React/TS)",
-    roleCategory: "Frontend Developer",
-    locationCity: "Bengaluru",
-    locationState: "Karnataka",
-    experienceMinYears: 1,
-    salaryMinLPA: 16,
-    salaryMaxLPA: 26,
-    description: "Craft high-polish, 60fps web user interfaces for consumer fintech products with rigorous accessibility and fluid interaction.",
-    postedAt: "2026-03-22T14:10:00Z",
-    dataSource: "REAL VERIFIED",
-    skills: [
-      { skillId: "sk-react", isRequired: true, minProficiency: "ADVANCED" },
-      { skillId: "sk-typescript", isRequired: true, minProficiency: "ADVANCED" },
-      { skillId: "sk-tailwind", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-rest-api", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-git", isRequired: true, minProficiency: "INTERMEDIATE" }
-    ]
-  },
-  {
-    id: "job-6",
-    employerId: "emp-infosys",
-    employerName: "Infosys Cloud Operations",
-    title: "Cloud Support Engineer (Linux & Cloud Infrastructure)",
-    roleCategory: "DevOps / Cloud Engineer",
-    locationCity: "Pune",
-    locationState: "Maharashtra",
-    experienceMinYears: 0,
-    salaryMinLPA: 6.5,
-    salaryMaxLPA: 10,
-    description: "Provide level-2 cloud infrastructure support, monitor Linux server metrics, write bash/Python automation scripts, and troubleshoot customer deployment issues.",
-    postedAt: "2026-03-24T09:15:00Z",
-    dataSource: "SAMPLE BENCHMARK",
-    skills: [
-      { skillId: "sk-linux", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-git", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-sql", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-aws", isRequired: true, minProficiency: "BEGINNER" },
-      { skillId: "sk-docker", isRequired: false, minProficiency: "BEGINNER" },
-      { skillId: "sk-comm", isRequired: false, minProficiency: "INTERMEDIATE" }
-    ]
-  },
-  {
-    id: "job-7",
-    employerId: "emp-wipro",
-    employerName: "Wipro Digital Platforms",
-    title: "Junior Cloud Engineer",
-    roleCategory: "DevOps / Cloud Engineer",
-    locationCity: "Bengaluru",
-    locationState: "Karnataka",
-    experienceMinYears: 0,
-    salaryMinLPA: 7.2,
-    salaryMaxLPA: 11.5,
-    description: "Assist in configuring AWS workloads, containerizing legacy apps, managing source repositories and validating staging environments.",
-    postedAt: "2026-03-25T11:45:00Z",
-    dataSource: "SAMPLE BENCHMARK",
-    skills: [
-      { skillId: "sk-linux", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-python", isRequired: true, minProficiency: "INTERMEDIATE" },
-      { skillId: "sk-docker", isRequired: true, minProficiency: "BEGINNER" },
-      { skillId: "sk-aws", isRequired: true, minProficiency: "BEGINNER" },
-      { skillId: "sk-ci-cd", isRequired: false, minProficiency: "BEGINNER" }
-    ]
-  }
-];
-var SEED_COURSES = [
-  {
-    id: "crs-pict-cs",
-    instituteId: "usr-institute-1",
-    title: "B.Tech in Computer Engineering (Autonomous 2024 Scheme)",
-    department: "Computer Engineering",
-    degreeLevel: "Undergraduate",
-    durationSemesters: 8,
-    enrolledStudents: 320,
-    targetIndustryRoles: ["Software Engineer", "DevOps / Cloud Engineer", "Data Analyst"]
-  },
-  {
-    id: "crs-pict-it",
-    instituteId: "usr-institute-1",
-    title: "B.Tech in Information Technology",
-    department: "Information Technology",
-    degreeLevel: "Undergraduate",
-    durationSemesters: 8,
-    enrolledStudents: 180,
-    targetIndustryRoles: ["Full-Stack Developer", "Cybersecurity Analyst"]
-  }
-];
-var SEED_CURRICULA = [
-  {
-    id: "cur-pict-cs-2026",
-    courseId: "crs-pict-cs",
-    academicYear: "2025-2026",
-    syllabusRaw: `PUNE INSTITUTE OF COMPUTER TECHNOLOGY
+      savedRoadmapProgress: {
+        "mod-docker-basics": true,
+        "mod-docker-compose": false,
+        "mod-aws-core": false,
+        "mod-k8s-pods": false
+      }
+    };
+    SEED_JOBS = [
+      {
+        id: "job-1",
+        employerId: "usr-employer-1",
+        employerName: "Razorpay",
+        title: "Associate DevOps Engineer (Platform Team)",
+        roleCategory: "DevOps / Cloud Engineer",
+        locationCity: "Bengaluru",
+        locationState: "Karnataka",
+        experienceMinYears: 0,
+        salaryMinLPA: 12,
+        salaryMaxLPA: 18,
+        description: "Join our cloud infrastructure team managing high-scale payment gateways processing millions of transactions. You will build resilient Docker images, maintain AWS EKS clusters, and automate Terraform modules.",
+        postedAt: "2026-03-01T10:00:00Z",
+        dataSource: "REAL VERIFIED",
+        skills: [
+          { skillId: "sk-linux", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-git", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-docker", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-aws", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-k8s", isRequired: false, minProficiency: "BEGINNER" },
+          { skillId: "sk-terraform", isRequired: false, minProficiency: "BEGINNER" }
+        ]
+      },
+      {
+        id: "job-2",
+        employerId: "emp-persistent",
+        employerName: "Persistent Systems",
+        title: "Cloud Systems Engineer (AWS/GCP)",
+        roleCategory: "DevOps / Cloud Engineer",
+        locationCity: "Pune",
+        locationState: "Maharashtra",
+        experienceMinYears: 1,
+        salaryMinLPA: 8.5,
+        salaryMaxLPA: 14,
+        description: "Responsible for client cloud migrations, multi-tenant container orchestration, and continuous integration pipelines.",
+        postedAt: "2026-03-12T11:30:00Z",
+        dataSource: "SAMPLE BENCHMARK",
+        skills: [
+          { skillId: "sk-aws", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-docker", isRequired: true, minProficiency: "BEGINNER" },
+          { skillId: "sk-linux", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-ci-cd", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-python", isRequired: false, minProficiency: "INTERMEDIATE" }
+        ]
+      },
+      {
+        id: "job-3",
+        employerId: "emp-swiggy",
+        employerName: "Swiggy Tech",
+        title: "Backend Platform Engineer (Python / Go)",
+        roleCategory: "Backend Developer",
+        locationCity: "Hyderabad",
+        locationState: "Telangana",
+        experienceMinYears: 1,
+        salaryMinLPA: 14,
+        salaryMaxLPA: 22,
+        description: "Scale our order dispatch microservices handling 100k requests/sec. Experience with asynchronous Python, PostgreSQL clustering, and distributed caching.",
+        postedAt: "2026-03-18T16:00:00Z",
+        dataSource: "SAMPLE BENCHMARK",
+        skills: [
+          { skillId: "sk-python", isRequired: true, minProficiency: "ADVANCED" },
+          { skillId: "sk-postgresql", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-redis", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-rest-api", isRequired: true, minProficiency: "ADVANCED" },
+          { skillId: "sk-docker", isRequired: false, minProficiency: "BEGINNER" }
+        ]
+      },
+      {
+        id: "job-4",
+        employerId: "emp-tata",
+        employerName: "Tata Elxsi",
+        title: "GenAI & Applied ML Specialist",
+        roleCategory: "AI / ML Engineer",
+        locationCity: "Bengaluru",
+        locationState: "Karnataka",
+        experienceMinYears: 0,
+        salaryMinLPA: 11,
+        salaryMaxLPA: 19,
+        description: "Build enterprise retrieval-augmented generation (RAG) agents, LLM tool-calling pipelines, and vector database indices.",
+        postedAt: "2026-03-20T08:45:00Z",
+        dataSource: "SAMPLE BENCHMARK",
+        skills: [
+          { skillId: "sk-python", isRequired: true, minProficiency: "ADVANCED" },
+          { skillId: "sk-genai", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-nlp", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-pytorch", isRequired: false, minProficiency: "BEGINNER" },
+          { skillId: "sk-sql", isRequired: true, minProficiency: "INTERMEDIATE" }
+        ]
+      },
+      {
+        id: "job-5",
+        employerId: "emp-cred",
+        employerName: "CRED",
+        title: "Frontend Product Engineer (React/TS)",
+        roleCategory: "Frontend Developer",
+        locationCity: "Bengaluru",
+        locationState: "Karnataka",
+        experienceMinYears: 1,
+        salaryMinLPA: 16,
+        salaryMaxLPA: 26,
+        description: "Craft high-polish, 60fps web user interfaces for consumer fintech products with rigorous accessibility and fluid interaction.",
+        postedAt: "2026-03-22T14:10:00Z",
+        dataSource: "REAL VERIFIED",
+        skills: [
+          { skillId: "sk-react", isRequired: true, minProficiency: "ADVANCED" },
+          { skillId: "sk-typescript", isRequired: true, minProficiency: "ADVANCED" },
+          { skillId: "sk-tailwind", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-rest-api", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-git", isRequired: true, minProficiency: "INTERMEDIATE" }
+        ]
+      },
+      {
+        id: "job-6",
+        employerId: "emp-infosys",
+        employerName: "Infosys Cloud Operations",
+        title: "Cloud Support Engineer (Linux & Cloud Infrastructure)",
+        roleCategory: "DevOps / Cloud Engineer",
+        locationCity: "Pune",
+        locationState: "Maharashtra",
+        experienceMinYears: 0,
+        salaryMinLPA: 6.5,
+        salaryMaxLPA: 10,
+        description: "Provide level-2 cloud infrastructure support, monitor Linux server metrics, write bash/Python automation scripts, and troubleshoot customer deployment issues.",
+        postedAt: "2026-03-24T09:15:00Z",
+        dataSource: "SAMPLE BENCHMARK",
+        skills: [
+          { skillId: "sk-linux", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-git", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-sql", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-aws", isRequired: true, minProficiency: "BEGINNER" },
+          { skillId: "sk-docker", isRequired: false, minProficiency: "BEGINNER" },
+          { skillId: "sk-comm", isRequired: false, minProficiency: "INTERMEDIATE" }
+        ]
+      },
+      {
+        id: "job-7",
+        employerId: "emp-wipro",
+        employerName: "Wipro Digital Platforms",
+        title: "Junior Cloud Engineer",
+        roleCategory: "DevOps / Cloud Engineer",
+        locationCity: "Bengaluru",
+        locationState: "Karnataka",
+        experienceMinYears: 0,
+        salaryMinLPA: 7.2,
+        salaryMaxLPA: 11.5,
+        description: "Assist in configuring AWS workloads, containerizing legacy apps, managing source repositories and validating staging environments.",
+        postedAt: "2026-03-25T11:45:00Z",
+        dataSource: "SAMPLE BENCHMARK",
+        skills: [
+          { skillId: "sk-linux", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-python", isRequired: true, minProficiency: "INTERMEDIATE" },
+          { skillId: "sk-docker", isRequired: true, minProficiency: "BEGINNER" },
+          { skillId: "sk-aws", isRequired: true, minProficiency: "BEGINNER" },
+          { skillId: "sk-ci-cd", isRequired: false, minProficiency: "BEGINNER" }
+        ]
+      }
+    ];
+    SEED_COURSES = [
+      {
+        id: "crs-pict-cs",
+        instituteId: "usr-institute-1",
+        title: "B.Tech in Computer Engineering (Autonomous 2024 Scheme)",
+        department: "Computer Engineering",
+        degreeLevel: "Undergraduate",
+        durationSemesters: 8,
+        enrolledStudents: 320,
+        targetIndustryRoles: ["Software Engineer", "DevOps / Cloud Engineer", "Data Analyst"]
+      },
+      {
+        id: "crs-pict-it",
+        instituteId: "usr-institute-1",
+        title: "B.Tech in Information Technology",
+        department: "Information Technology",
+        degreeLevel: "Undergraduate",
+        durationSemesters: 8,
+        enrolledStudents: 180,
+        targetIndustryRoles: ["Full-Stack Developer", "Cybersecurity Analyst"]
+      }
+    ];
+    SEED_CURRICULA = [
+      {
+        id: "cur-pict-cs-2026",
+        courseId: "crs-pict-cs",
+        academicYear: "2025-2026",
+        syllabusRaw: `PUNE INSTITUTE OF COMPUTER TECHNOLOGY
 DEPARTMENT OF COMPUTER ENGINEERING
 COURSE OUTLINE: B.TECH COMPUTER ENGINEERING (SEMESTER 5-8)
 
@@ -462,348 +549,371 @@ Module 4: Computer Networks
 
 Module 5: Elective - Cloud & Virtualization (Theoretical)
 - Hypervisors, private clouds, introductory OpenStack concepts`,
-    skills: [
-      { skillId: "sk-linux", coverageDepth: "PRACTICAL", semesterTaught: 5, hoursDedicated: 48 },
-      { skillId: "sk-python", coverageDepth: "PRACTICAL", semesterTaught: 4, hoursDedicated: 40 },
-      { skillId: "sk-sql", coverageDepth: "PRACTICAL", semesterTaught: 5, hoursDedicated: 45 },
-      { skillId: "sk-problem-solving", coverageDepth: "PRACTICAL", semesterTaught: 3, hoursDedicated: 60 },
-      { skillId: "sk-git", coverageDepth: "CONCEPTUAL", semesterTaught: 5, hoursDedicated: 12 }
-      // NOTE: Docker, Kubernetes, AWS, Terraform, CI/CD are completely absent from core university curriculum!
-    ],
-    alignmentScore: 48.2,
-    // Explainable: 5 out of 11 industry required skills covered
-    lastAudited: "2026-02-10T12:00:00Z"
-  }
-];
-var SEED_STATE_DEMANDS = [
-  // Karnataka (Bengaluru)
-  { state: "Karnataka", skillId: "sk-aws", openingsCount: 14200, growthRatePct: 34, demandIndex: 96, supplyIndex: 42, gapRatio: 2.28, dataSource: "REAL VERIFIED" },
-  { state: "Karnataka", skillId: "sk-docker", openingsCount: 12800, growthRatePct: 38, demandIndex: 94, supplyIndex: 38, gapRatio: 2.47, dataSource: "REAL VERIFIED" },
-  { state: "Karnataka", skillId: "sk-k8s", openingsCount: 9600, growthRatePct: 45, demandIndex: 91, supplyIndex: 26, gapRatio: 3.5, dataSource: "REAL VERIFIED" },
-  { state: "Karnataka", skillId: "sk-genai", openingsCount: 11400, growthRatePct: 82, demandIndex: 98, supplyIndex: 22, gapRatio: 4.45, dataSource: "REAL VERIFIED" },
-  { state: "Karnataka", skillId: "sk-react", openingsCount: 16500, growthRatePct: 18, demandIndex: 92, supplyIndex: 88, gapRatio: 1.05, dataSource: "REAL VERIFIED" },
-  // Maharashtra (Pune & Mumbai)
-  { state: "Maharashtra", skillId: "sk-aws", openingsCount: 10400, growthRatePct: 31, demandIndex: 88, supplyIndex: 40, gapRatio: 2.2, dataSource: "REAL VERIFIED" },
-  { state: "Maharashtra", skillId: "sk-docker", openingsCount: 8900, growthRatePct: 35, demandIndex: 85, supplyIndex: 35, gapRatio: 2.42, dataSource: "REAL VERIFIED" },
-  { state: "Maharashtra", skillId: "sk-k8s", openingsCount: 6700, growthRatePct: 41, demandIndex: 81, supplyIndex: 24, gapRatio: 3.37, dataSource: "REAL VERIFIED" },
-  { state: "Maharashtra", skillId: "sk-genai", openingsCount: 7800, growthRatePct: 75, demandIndex: 89, supplyIndex: 19, gapRatio: 4.68, dataSource: "SAMPLE BENCHMARK" },
-  { state: "Maharashtra", skillId: "sk-python", openingsCount: 13200, growthRatePct: 24, demandIndex: 89, supplyIndex: 78, gapRatio: 1.14, dataSource: "SAMPLE BENCHMARK" },
-  // Telangana (Hyderabad)
-  { state: "Telangana", skillId: "sk-aws", openingsCount: 9200, growthRatePct: 33, demandIndex: 86, supplyIndex: 39, gapRatio: 2.2, dataSource: "REAL VERIFIED" },
-  { state: "Telangana", skillId: "sk-docker", openingsCount: 7800, growthRatePct: 36, demandIndex: 82, supplyIndex: 34, gapRatio: 2.41, dataSource: "REAL VERIFIED" },
-  { state: "Telangana", skillId: "sk-genai", openingsCount: 7100, growthRatePct: 79, demandIndex: 87, supplyIndex: 20, gapRatio: 4.35, dataSource: "SAMPLE BENCHMARK" },
-  { state: "Telangana", skillId: "sk-sql", openingsCount: 11200, growthRatePct: 15, demandIndex: 84, supplyIndex: 82, gapRatio: 1.02, dataSource: "SAMPLE BENCHMARK" },
-  // Tamil Nadu (Chennai & Coimbatore)
-  { state: "Tamil Nadu", skillId: "sk-aws", openingsCount: 7600, growthRatePct: 28, demandIndex: 80, supplyIndex: 36, gapRatio: 2.22, dataSource: "SAMPLE BENCHMARK" },
-  { state: "Tamil Nadu", skillId: "sk-docker", openingsCount: 6500, growthRatePct: 32, demandIndex: 77, supplyIndex: 31, gapRatio: 2.48, dataSource: "SAMPLE BENCHMARK" },
-  { state: "Tamil Nadu", skillId: "sk-java", openingsCount: 12400, growthRatePct: 14, demandIndex: 88, supplyIndex: 94, gapRatio: 0.93, dataSource: "SAMPLE BENCHMARK" },
-  // Slight oversupply of legacy Java
-  // Delhi NCR (Delhi, Noida, Gurugram)
-  { state: "Delhi NCR", skillId: "sk-aws", openingsCount: 9800, growthRatePct: 32, demandIndex: 87, supplyIndex: 44, gapRatio: 1.98, dataSource: "REAL VERIFIED" },
-  { state: "Delhi NCR", skillId: "sk-genai", openingsCount: 8400, growthRatePct: 80, demandIndex: 90, supplyIndex: 25, gapRatio: 3.6, dataSource: "SAMPLE BENCHMARK" },
-  { state: "Delhi NCR", skillId: "sk-react", openingsCount: 13900, growthRatePct: 19, demandIndex: 89, supplyIndex: 86, gapRatio: 1.03, dataSource: "SAMPLE BENCHMARK" },
-  // Gujarat (Ahmedabad, Gandhinagar)
-  { state: "Gujarat", skillId: "sk-docker", openingsCount: 3800, growthRatePct: 29, demandIndex: 65, supplyIndex: 22, gapRatio: 2.95, dataSource: "SAMPLE BENCHMARK" },
-  { state: "Gujarat", skillId: "sk-cybersec", openingsCount: 3400, growthRatePct: 42, demandIndex: 68, supplyIndex: 18, gapRatio: 3.77, dataSource: "SAMPLE BENCHMARK" },
-  // West Bengal (Kolkata)
-  { state: "West Bengal", skillId: "sk-aws", openingsCount: 4200, growthRatePct: 26, demandIndex: 68, supplyIndex: 28, gapRatio: 2.42, dataSource: "SAMPLE BENCHMARK" },
-  { state: "West Bengal", skillId: "sk-python", openingsCount: 6900, growthRatePct: 21, demandIndex: 74, supplyIndex: 72, gapRatio: 1.03, dataSource: "SAMPLE BENCHMARK" },
-  // Kerala (Kochi, Thiruvananthapuram)
-  { state: "Kerala", skillId: "sk-react", openingsCount: 4800, growthRatePct: 22, demandIndex: 72, supplyIndex: 68, gapRatio: 1.06, dataSource: "SAMPLE BENCHMARK" },
-  { state: "Kerala", skillId: "sk-cybersec", openingsCount: 2900, growthRatePct: 38, demandIndex: 64, supplyIndex: 19, gapRatio: 3.36, dataSource: "SAMPLE BENCHMARK" }
-];
-var SEED_ASSESSMENTS = [
-  {
-    id: "asmt-docker",
-    skillId: "sk-docker",
-    skillName: "Docker",
-    title: "Docker Containerization & Multi-Stage Builds",
-    durationMinutes: 10,
-    questions: [
-      {
-        id: "q1",
-        question: "Which Dockerfile instruction creates an intermediate layer used for executing build commands?",
-        options: ["RUN", "CMD", "ENTRYPOINT", "COPY"],
-        correctOptionIndex: 0,
-        explanation: "RUN executes commands during the build phase and commits the results to a new image layer."
-      },
-      {
-        id: "q2",
-        question: "What is the primary architectural advantage of a multi-stage Docker build?",
-        options: [
-          "Decreases CPU usage during runtime",
-          "Minimizes final production image size by discarding build tools and intermediate artifacts",
-          "Enables automatic Kubernetes horizontal autoscaling",
-          "Encrypts secrets directly in image layer digests"
+        skills: [
+          { skillId: "sk-linux", coverageDepth: "PRACTICAL", semesterTaught: 5, hoursDedicated: 48 },
+          { skillId: "sk-python", coverageDepth: "PRACTICAL", semesterTaught: 4, hoursDedicated: 40 },
+          { skillId: "sk-sql", coverageDepth: "PRACTICAL", semesterTaught: 5, hoursDedicated: 45 },
+          { skillId: "sk-problem-solving", coverageDepth: "PRACTICAL", semesterTaught: 3, hoursDedicated: 60 },
+          { skillId: "sk-git", coverageDepth: "CONCEPTUAL", semesterTaught: 5, hoursDedicated: 12 }
+          // NOTE: Docker, Kubernetes, AWS, Terraform, CI/CD are completely absent from core university curriculum!
         ],
-        correctOptionIndex: 1,
-        explanation: "Multi-stage builds allow compiling in a fat builder container and copying only compiled artifacts into a lightweight scratch/alpine runtime image."
+        alignmentScore: 48.2,
+        // Explainable: 5 out of 11 industry required skills covered
+        lastAudited: "2026-02-10T12:00:00Z"
+      }
+    ];
+    SEED_STATE_DEMANDS = [
+      // Karnataka (Bengaluru)
+      { state: "Karnataka", skillId: "sk-aws", openingsCount: 14200, growthRatePct: 34, demandIndex: 96, supplyIndex: 42, gapRatio: 2.28, dataSource: "REAL VERIFIED" },
+      { state: "Karnataka", skillId: "sk-docker", openingsCount: 12800, growthRatePct: 38, demandIndex: 94, supplyIndex: 38, gapRatio: 2.47, dataSource: "REAL VERIFIED" },
+      { state: "Karnataka", skillId: "sk-k8s", openingsCount: 9600, growthRatePct: 45, demandIndex: 91, supplyIndex: 26, gapRatio: 3.5, dataSource: "REAL VERIFIED" },
+      { state: "Karnataka", skillId: "sk-genai", openingsCount: 11400, growthRatePct: 82, demandIndex: 98, supplyIndex: 22, gapRatio: 4.45, dataSource: "REAL VERIFIED" },
+      { state: "Karnataka", skillId: "sk-react", openingsCount: 16500, growthRatePct: 18, demandIndex: 92, supplyIndex: 88, gapRatio: 1.05, dataSource: "REAL VERIFIED" },
+      // Maharashtra (Pune & Mumbai)
+      { state: "Maharashtra", skillId: "sk-aws", openingsCount: 10400, growthRatePct: 31, demandIndex: 88, supplyIndex: 40, gapRatio: 2.2, dataSource: "REAL VERIFIED" },
+      { state: "Maharashtra", skillId: "sk-docker", openingsCount: 8900, growthRatePct: 35, demandIndex: 85, supplyIndex: 35, gapRatio: 2.42, dataSource: "REAL VERIFIED" },
+      { state: "Maharashtra", skillId: "sk-k8s", openingsCount: 6700, growthRatePct: 41, demandIndex: 81, supplyIndex: 24, gapRatio: 3.37, dataSource: "REAL VERIFIED" },
+      { state: "Maharashtra", skillId: "sk-genai", openingsCount: 7800, growthRatePct: 75, demandIndex: 89, supplyIndex: 19, gapRatio: 4.68, dataSource: "SAMPLE BENCHMARK" },
+      { state: "Maharashtra", skillId: "sk-python", openingsCount: 13200, growthRatePct: 24, demandIndex: 89, supplyIndex: 78, gapRatio: 1.14, dataSource: "SAMPLE BENCHMARK" },
+      // Telangana (Hyderabad)
+      { state: "Telangana", skillId: "sk-aws", openingsCount: 9200, growthRatePct: 33, demandIndex: 86, supplyIndex: 39, gapRatio: 2.2, dataSource: "REAL VERIFIED" },
+      { state: "Telangana", skillId: "sk-docker", openingsCount: 7800, growthRatePct: 36, demandIndex: 82, supplyIndex: 34, gapRatio: 2.41, dataSource: "REAL VERIFIED" },
+      { state: "Telangana", skillId: "sk-genai", openingsCount: 7100, growthRatePct: 79, demandIndex: 87, supplyIndex: 20, gapRatio: 4.35, dataSource: "SAMPLE BENCHMARK" },
+      { state: "Telangana", skillId: "sk-sql", openingsCount: 11200, growthRatePct: 15, demandIndex: 84, supplyIndex: 82, gapRatio: 1.02, dataSource: "SAMPLE BENCHMARK" },
+      // Tamil Nadu (Chennai & Coimbatore)
+      { state: "Tamil Nadu", skillId: "sk-aws", openingsCount: 7600, growthRatePct: 28, demandIndex: 80, supplyIndex: 36, gapRatio: 2.22, dataSource: "SAMPLE BENCHMARK" },
+      { state: "Tamil Nadu", skillId: "sk-docker", openingsCount: 6500, growthRatePct: 32, demandIndex: 77, supplyIndex: 31, gapRatio: 2.48, dataSource: "SAMPLE BENCHMARK" },
+      { state: "Tamil Nadu", skillId: "sk-java", openingsCount: 12400, growthRatePct: 14, demandIndex: 88, supplyIndex: 94, gapRatio: 0.93, dataSource: "SAMPLE BENCHMARK" },
+      // Slight oversupply of legacy Java
+      // Delhi NCR (Delhi, Noida, Gurugram)
+      { state: "Delhi NCR", skillId: "sk-aws", openingsCount: 9800, growthRatePct: 32, demandIndex: 87, supplyIndex: 44, gapRatio: 1.98, dataSource: "REAL VERIFIED" },
+      { state: "Delhi NCR", skillId: "sk-genai", openingsCount: 8400, growthRatePct: 80, demandIndex: 90, supplyIndex: 25, gapRatio: 3.6, dataSource: "SAMPLE BENCHMARK" },
+      { state: "Delhi NCR", skillId: "sk-react", openingsCount: 13900, growthRatePct: 19, demandIndex: 89, supplyIndex: 86, gapRatio: 1.03, dataSource: "SAMPLE BENCHMARK" },
+      // Gujarat (Ahmedabad, Gandhinagar)
+      { state: "Gujarat", skillId: "sk-docker", openingsCount: 3800, growthRatePct: 29, demandIndex: 65, supplyIndex: 22, gapRatio: 2.95, dataSource: "SAMPLE BENCHMARK" },
+      { state: "Gujarat", skillId: "sk-cybersec", openingsCount: 3400, growthRatePct: 42, demandIndex: 68, supplyIndex: 18, gapRatio: 3.77, dataSource: "SAMPLE BENCHMARK" },
+      // West Bengal (Kolkata)
+      { state: "West Bengal", skillId: "sk-aws", openingsCount: 4200, growthRatePct: 26, demandIndex: 68, supplyIndex: 28, gapRatio: 2.42, dataSource: "SAMPLE BENCHMARK" },
+      { state: "West Bengal", skillId: "sk-python", openingsCount: 6900, growthRatePct: 21, demandIndex: 74, supplyIndex: 72, gapRatio: 1.03, dataSource: "SAMPLE BENCHMARK" },
+      // Kerala (Kochi, Thiruvananthapuram)
+      { state: "Kerala", skillId: "sk-react", openingsCount: 4800, growthRatePct: 22, demandIndex: 72, supplyIndex: 68, gapRatio: 1.06, dataSource: "SAMPLE BENCHMARK" },
+      { state: "Kerala", skillId: "sk-cybersec", openingsCount: 2900, growthRatePct: 38, demandIndex: 64, supplyIndex: 19, gapRatio: 3.36, dataSource: "SAMPLE BENCHMARK" }
+    ];
+    SEED_ASSESSMENTS = [
+      {
+        id: "asmt-docker",
+        skillId: "sk-docker",
+        skillName: "Docker",
+        title: "Docker Containerization & Multi-Stage Builds",
+        durationMinutes: 10,
+        questions: [
+          {
+            id: "q1",
+            question: "Which Dockerfile instruction creates an intermediate layer used for executing build commands?",
+            options: ["RUN", "CMD", "ENTRYPOINT", "COPY"],
+            correctOptionIndex: 0,
+            explanation: "RUN executes commands during the build phase and commits the results to a new image layer."
+          },
+          {
+            id: "q2",
+            question: "What is the primary architectural advantage of a multi-stage Docker build?",
+            options: [
+              "Decreases CPU usage during runtime",
+              "Minimizes final production image size by discarding build tools and intermediate artifacts",
+              "Enables automatic Kubernetes horizontal autoscaling",
+              "Encrypts secrets directly in image layer digests"
+            ],
+            correctOptionIndex: 1,
+            explanation: "Multi-stage builds allow compiling in a fat builder container and copying only compiled artifacts into a lightweight scratch/alpine runtime image."
+          },
+          {
+            id: "q3",
+            question: "In Docker Compose, what mechanism ensures service B waits for service A to pass health checks before starting?",
+            options: ["links", "depends_on with condition: service_healthy", "restart: always", "expose: ports"],
+            correctOptionIndex: 1,
+            explanation: "depends_on with condition: service_healthy prevents race conditions during database initialization."
+          }
+        ]
       },
       {
-        id: "q3",
-        question: "In Docker Compose, what mechanism ensures service B waits for service A to pass health checks before starting?",
-        options: ["links", "depends_on with condition: service_healthy", "restart: always", "expose: ports"],
-        correctOptionIndex: 1,
-        explanation: "depends_on with condition: service_healthy prevents race conditions during database initialization."
-      }
-    ]
-  },
-  {
-    id: "asmt-aws",
-    skillId: "sk-aws",
-    skillName: "AWS",
-    title: "AWS Cloud Fundamentals & IAM Security",
-    durationMinutes: 10,
-    questions: [
-      {
-        id: "q1",
-        question: "Which AWS service is best suited for managing temporary security credentials for EC2 applications without hardcoding API keys?",
-        options: ["AWS IAM Roles with Instance Profiles", "Root User Access Keys", "AWS Secrets Manager in plaintext", "AWS Cognito User Pools"],
-        correctOptionIndex: 0,
-        explanation: "IAM Roles attached via Instance Profiles supply short-lived STS credentials automatically rotated by the instance metadata service."
+        id: "asmt-aws",
+        skillId: "sk-aws",
+        skillName: "AWS",
+        title: "AWS Cloud Fundamentals & IAM Security",
+        durationMinutes: 10,
+        questions: [
+          {
+            id: "q1",
+            question: "Which AWS service is best suited for managing temporary security credentials for EC2 applications without hardcoding API keys?",
+            options: ["AWS IAM Roles with Instance Profiles", "Root User Access Keys", "AWS Secrets Manager in plaintext", "AWS Cognito User Pools"],
+            correctOptionIndex: 0,
+            explanation: "IAM Roles attached via Instance Profiles supply short-lived STS credentials automatically rotated by the instance metadata service."
+          },
+          {
+            id: "q2",
+            question: "Which AWS VPC component routes outbound traffic from private subnets to the public internet while blocking incoming connections?",
+            options: ["Internet Gateway (IGW)", "NAT Gateway", "Transit Gateway", "VPC Peering Connection"],
+            correctOptionIndex: 1,
+            explanation: "A NAT Gateway enables outbound internet access for private subnets while preventing unsolicited inbound traffic."
+          }
+        ]
       },
       {
-        id: "q2",
-        question: "Which AWS VPC component routes outbound traffic from private subnets to the public internet while blocking incoming connections?",
-        options: ["Internet Gateway (IGW)", "NAT Gateway", "Transit Gateway", "VPC Peering Connection"],
-        correctOptionIndex: 1,
-        explanation: "A NAT Gateway enables outbound internet access for private subnets while preventing unsolicited inbound traffic."
+        id: "asmt-git",
+        skillId: "sk-git",
+        skillName: "Git",
+        title: "Git Version Control & Branching Workflows",
+        durationMinutes: 8,
+        questions: [
+          {
+            id: "q1",
+            question: "What is the difference between git fetch and git pull?",
+            options: [
+              "git pull only downloads tags, git fetch downloads commits",
+              "git fetch downloads remote metadata without modifying your working branch; git pull fetches and merges",
+              "git fetch pushes local commits; git pull downloads remote commits",
+              "They are identical aliases"
+            ],
+            correctOptionIndex: 1,
+            explanation: "git fetch updates remote tracking branches without altering the working tree; git pull runs fetch followed by merge."
+          }
+        ]
       }
-    ]
-  },
-  {
-    id: "asmt-git",
-    skillId: "sk-git",
-    skillName: "Git",
-    title: "Git Version Control & Branching Workflows",
-    durationMinutes: 8,
-    questions: [
+    ];
+    SEED_EMPLOYER_SURVEYS = [
       {
-        id: "q1",
-        question: "What is the difference between git fetch and git pull?",
-        options: [
-          "git pull only downloads tags, git fetch downloads commits",
-          "git fetch downloads remote metadata without modifying your working branch; git pull fetches and merges",
-          "git fetch pushes local commits; git pull downloads remote commits",
-          "They are identical aliases"
-        ],
-        correctOptionIndex: 1,
-        explanation: "git fetch updates remote tracking branches without altering the working tree; git pull runs fetch followed by merge."
+        id: "es-1",
+        employerId: "usr-employer-1",
+        employerName: "Razorpay",
+        industry: "Fintech / Payments",
+        hardToHireSkills: ["Kubernetes", "Terraform", "Observability (Prometheus/Grafana)", "Go"],
+        emergingSkills: ["Generative AI Agents", "eBPF Kernel Monitoring", "Multi-Cloud FinOps"],
+        fresherGaps: ["Engineering graduates understand theoretical OS concepts but cannot write a multi-stage Dockerfile or configure a reverse proxy."],
+        recommendedCertifications: ["AWS Solutions Architect Associate (SAA-C03)", "Certified Kubernetes Administrator (CKA)"],
+        additionalRemarks: "We strongly urge institutes to make lab projects deployable on live cloud accounts rather than local XAMPP servers.",
+        submittedAt: "2026-03-15T11:20:00Z"
+      },
+      {
+        id: "es-2",
+        employerId: "emp-tata",
+        employerName: "Tata Elxsi",
+        industry: "Automotive & Enterprise Software",
+        hardToHireSkills: ["PyTorch", "Vector Databases", "Embedded Linux"],
+        emergingSkills: ["Local LLM Inference Optimization", "Model Quantization (GGML/GGUF)"],
+        fresherGaps: ["Students rely heavily on generic high-level tutorials without understanding memory profiling or vector arithmetic."],
+        recommendedCertifications: ["NVIDIA Deep Learning Institute Certificate", "TensorFlow Developer"],
+        additionalRemarks: "Industry-academia co-curricula design is vital for 2026.",
+        submittedAt: "2026-03-21T09:45:00Z"
       }
-    ]
+    ];
+    SEED_RECOMMENDATIONS = [
+      {
+        id: "rec-govt-1",
+        targetRoleType: "GOVT",
+        title: "Urgent Cloud & DevOps Capacity Expansion in Maharashtra & Karnataka",
+        actionSummary: "State technical universities currently produce only 35% of the annual industry demand for containerization (Docker/K8s) and AWS engineers. Mandate cloud credits and container labs in AICTE Model Curriculum 2026.",
+        evidenceData: {
+          gapRatio: 2.47,
+          totalUnmetOpenings: 32600,
+          annualGraduatesLackingSkill: 84e3,
+          impactedStates: ["Maharashtra", "Karnataka", "Telangana"]
+        },
+        priority: "CRITICAL",
+        confidenceScore: 0.94,
+        dataSourceLabel: "OBSERVED MARKET DATA"
+      },
+      {
+        id: "rec-inst-1",
+        targetRoleType: "INSTITUTE",
+        title: "Incorporate Docker & AWS Lab Practicals in 6th Semester Curriculum",
+        actionSummary: "Your current Computer Engineering curriculum alignment score is 48.2%. Adding containerization hands-on modules in Operating Systems Lab will elevate institutional placement readiness by 36%.",
+        evidenceData: {
+          currentAlignment: 48.2,
+          potentialAlignment: 84.5,
+          missingDemandedSkills: ["Docker", "AWS", "Kubernetes", "CI/CD Pipelines"]
+        },
+        priority: "HIGH",
+        confidenceScore: 0.91,
+        dataSourceLabel: "OBSERVED MARKET DATA"
+      },
+      {
+        id: "rec-stu-1",
+        targetRoleType: "STUDENT",
+        title: "Targeted Gap Closure: Docker & AWS Foundations for Razorpay Placement",
+        actionSummary: "You have a 50% deterministic match for the Razorpay Associate DevOps Engineer role. Completing containerization projects and the AWS fundamental assessment will boost your candidate percentile to Top 8%.",
+        evidenceData: {
+          currentMatchScore: 50,
+          matchedSkills: ["Linux", "Git"],
+          missingRequiredSkills: ["Docker", "AWS"],
+          averageSalaryAdvantage: "+ \u20B94.5 LPA"
+        },
+        priority: "CRITICAL",
+        confidenceScore: 0.96,
+        dataSourceLabel: "OBSERVED MARKET DATA"
+      }
+    ];
   }
-];
-var SEED_EMPLOYER_SURVEYS = [
-  {
-    id: "es-1",
-    employerId: "usr-employer-1",
-    employerName: "Razorpay",
-    industry: "Fintech / Payments",
-    hardToHireSkills: ["Kubernetes", "Terraform", "Observability (Prometheus/Grafana)", "Go"],
-    emergingSkills: ["Generative AI Agents", "eBPF Kernel Monitoring", "Multi-Cloud FinOps"],
-    fresherGaps: ["Engineering graduates understand theoretical OS concepts but cannot write a multi-stage Dockerfile or configure a reverse proxy."],
-    recommendedCertifications: ["AWS Solutions Architect Associate (SAA-C03)", "Certified Kubernetes Administrator (CKA)"],
-    additionalRemarks: "We strongly urge institutes to make lab projects deployable on live cloud accounts rather than local XAMPP servers.",
-    submittedAt: "2026-03-15T11:20:00Z"
-  },
-  {
-    id: "es-2",
-    employerId: "emp-tata",
-    employerName: "Tata Elxsi",
-    industry: "Automotive & Enterprise Software",
-    hardToHireSkills: ["PyTorch", "Vector Databases", "Embedded Linux"],
-    emergingSkills: ["Local LLM Inference Optimization", "Model Quantization (GGML/GGUF)"],
-    fresherGaps: ["Students rely heavily on generic high-level tutorials without understanding memory profiling or vector arithmetic."],
-    recommendedCertifications: ["NVIDIA Deep Learning Institute Certificate", "TensorFlow Developer"],
-    additionalRemarks: "Industry-academia co-curricula design is vital for 2026.",
-    submittedAt: "2026-03-21T09:45:00Z"
-  }
-];
-var SEED_RECOMMENDATIONS = [
-  {
-    id: "rec-govt-1",
-    targetRoleType: "GOVT",
-    title: "Urgent Cloud & DevOps Capacity Expansion in Maharashtra & Karnataka",
-    actionSummary: "State technical universities currently produce only 35% of the annual industry demand for containerization (Docker/K8s) and AWS engineers. Mandate cloud credits and container labs in AICTE Model Curriculum 2026.",
-    evidenceData: {
-      gapRatio: 2.47,
-      totalUnmetOpenings: 32600,
-      annualGraduatesLackingSkill: 84e3,
-      impactedStates: ["Maharashtra", "Karnataka", "Telangana"]
-    },
-    priority: "CRITICAL",
-    confidenceScore: 0.94,
-    dataSourceLabel: "OBSERVED MARKET DATA"
-  },
-  {
-    id: "rec-inst-1",
-    targetRoleType: "INSTITUTE",
-    title: "Incorporate Docker & AWS Lab Practicals in 6th Semester Curriculum",
-    actionSummary: "Your current Computer Engineering curriculum alignment score is 48.2%. Adding containerization hands-on modules in Operating Systems Lab will elevate institutional placement readiness by 36%.",
-    evidenceData: {
-      currentAlignment: 48.2,
-      potentialAlignment: 84.5,
-      missingDemandedSkills: ["Docker", "AWS", "Kubernetes", "CI/CD Pipelines"]
-    },
-    priority: "HIGH",
-    confidenceScore: 0.91,
-    dataSourceLabel: "OBSERVED MARKET DATA"
-  },
-  {
-    id: "rec-stu-1",
-    targetRoleType: "STUDENT",
-    title: "Targeted Gap Closure: Docker & AWS Foundations for Razorpay Placement",
-    actionSummary: "You have a 50% deterministic match for the Razorpay Associate DevOps Engineer role. Completing containerization projects and the AWS fundamental assessment will boost your candidate percentile to Top 8%.",
-    evidenceData: {
-      currentMatchScore: 50,
-      matchedSkills: ["Linux", "Git"],
-      missingRequiredSkills: ["Docker", "AWS"],
-      averageSalaryAdvantage: "+ \u20B94.5 LPA"
-    },
-    priority: "CRITICAL",
-    confidenceScore: 0.96,
-    dataSourceLabel: "OBSERVED MARKET DATA"
-  }
-];
+});
 
 // backend/database/store.ts
-var DatabaseStore = class {
-  constructor() {
-    this.users = /* @__PURE__ */ new Map();
-    this.studentProfiles = /* @__PURE__ */ new Map();
-    this.skills = /* @__PURE__ */ new Map();
-    this.jobs = /* @__PURE__ */ new Map();
-    this.courses = /* @__PURE__ */ new Map();
-    this.curricula = /* @__PURE__ */ new Map();
-    this.stateDemands = [];
-    this.assessments = /* @__PURE__ */ new Map();
-    this.assessmentResults = [];
-    this.employerSurveys = [];
-    this.recommendations = [];
-    this.resetToSeed();
+var store_exports = {};
+__export(store_exports, {
+  db: () => db
+});
+var DatabaseStore, db;
+var init_store = __esm({
+  "backend/database/store.ts"() {
+    init_taxonomy();
+    init_seedData();
+    DatabaseStore = class {
+      constructor() {
+        this.users = /* @__PURE__ */ new Map();
+        this.studentProfiles = /* @__PURE__ */ new Map();
+        this.skills = /* @__PURE__ */ new Map();
+        this.jobs = /* @__PURE__ */ new Map();
+        this.courses = /* @__PURE__ */ new Map();
+        this.curricula = /* @__PURE__ */ new Map();
+        this.stateDemands = [];
+        this.assessments = /* @__PURE__ */ new Map();
+        this.assessmentResults = [];
+        this.employerSurveys = [];
+        this.recommendations = [];
+        this.resetToSeed();
+      }
+      resetToSeed() {
+        this.users.clear();
+        this.studentProfiles.clear();
+        this.skills.clear();
+        this.jobs.clear();
+        this.courses.clear();
+        this.curricula.clear();
+        this.assessments.clear();
+        this.assessmentResults = [];
+        this.employerSurveys = [];
+        this.recommendations = [];
+        for (const skill of CANONICAL_SKILLS) {
+          this.skills.set(skill.id, skill);
+        }
+        for (const user of SEED_USERS) {
+          this.users.set(user.id, { ...user });
+        }
+        this.studentProfiles.set(SEED_STUDENT_PROFILE.userId, JSON.parse(JSON.stringify(SEED_STUDENT_PROFILE)));
+        for (const job of SEED_JOBS) {
+          this.jobs.set(job.id, JSON.parse(JSON.stringify(job)));
+        }
+        for (const course of SEED_COURSES) {
+          this.courses.set(course.id, JSON.parse(JSON.stringify(course)));
+        }
+        for (const curriculum of SEED_CURRICULA) {
+          this.curricula.set(curriculum.id, JSON.parse(JSON.stringify(curriculum)));
+        }
+        this.stateDemands = JSON.parse(JSON.stringify(SEED_STATE_DEMANDS));
+        for (const asmt of SEED_ASSESSMENTS) {
+          this.assessments.set(asmt.id, JSON.parse(JSON.stringify(asmt)));
+        }
+        this.employerSurveys = JSON.parse(JSON.stringify(SEED_EMPLOYER_SURVEYS));
+        this.recommendations = JSON.parse(JSON.stringify(SEED_RECOMMENDATIONS));
+      }
+      // User queries
+      getUserByEmail(email) {
+        for (const u of this.users.values()) {
+          if (u.email.toLowerCase() === email.toLowerCase()) return u;
+        }
+        return void 0;
+      }
+      getUserById(id) {
+        return this.users.get(id);
+      }
+      createUser(user) {
+        this.users.set(user.id, user);
+        return user;
+      }
+      // Student queries
+      getStudentProfileByUserId(userId) {
+        return this.studentProfiles.get(userId);
+      }
+      saveStudentProfile(profile) {
+        this.studentProfiles.set(profile.userId, profile);
+        return profile;
+      }
+      // Job queries
+      getAllJobs() {
+        return Array.from(this.jobs.values()).sort(
+          (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
+        );
+      }
+      getJobById(id) {
+        return this.jobs.get(id);
+      }
+      createJob(job) {
+        this.jobs.set(job.id, job);
+        return job;
+      }
+      // Skills queries
+      getAllSkills() {
+        return Array.from(this.skills.values());
+      }
+      getSkillById(id) {
+        return this.skills.get(id);
+      }
+      // Course & Curricula queries
+      getAllCourses() {
+        return Array.from(this.courses.values());
+      }
+      getCurriculaForCourse(courseId) {
+        for (const cur of this.curricula.values()) {
+          if (cur.courseId === courseId) return cur;
+        }
+        return void 0;
+      }
+      saveCurriculum(curriculum) {
+        this.curricula.set(curriculum.id, curriculum);
+        return curriculum;
+      }
+      // Assessments
+      getAllAssessments() {
+        return Array.from(this.assessments.values());
+      }
+      getAssessmentById(id) {
+        return this.assessments.get(id);
+      }
+      addAssessmentResult(result) {
+        this.assessmentResults.push(result);
+      }
+      getAssessmentResultsForStudent(studentId) {
+        return this.assessmentResults.filter((r) => r.studentId === studentId);
+      }
+      // Surveys
+      getAllSurveys() {
+        return this.employerSurveys;
+      }
+      addSurvey(survey) {
+        this.employerSurveys.unshift(survey);
+      }
+      // Recommendations
+      getRecommendations(targetRoleType) {
+        if (!targetRoleType) return this.recommendations;
+        return this.recommendations.filter((r) => r.targetRoleType === targetRoleType);
+      }
+      addRecommendation(rec) {
+        this.recommendations.unshift(rec);
+      }
+    };
+    db = new DatabaseStore();
   }
-  resetToSeed() {
-    this.users.clear();
-    this.studentProfiles.clear();
-    this.skills.clear();
-    this.jobs.clear();
-    this.courses.clear();
-    this.curricula.clear();
-    this.assessments.clear();
-    this.assessmentResults = [];
-    this.employerSurveys = [];
-    this.recommendations = [];
-    for (const skill of CANONICAL_SKILLS) {
-      this.skills.set(skill.id, skill);
-    }
-    for (const user of SEED_USERS) {
-      this.users.set(user.id, { ...user });
-    }
-    this.studentProfiles.set(SEED_STUDENT_PROFILE.userId, JSON.parse(JSON.stringify(SEED_STUDENT_PROFILE)));
-    for (const job of SEED_JOBS) {
-      this.jobs.set(job.id, JSON.parse(JSON.stringify(job)));
-    }
-    for (const course of SEED_COURSES) {
-      this.courses.set(course.id, JSON.parse(JSON.stringify(course)));
-    }
-    for (const curriculum of SEED_CURRICULA) {
-      this.curricula.set(curriculum.id, JSON.parse(JSON.stringify(curriculum)));
-    }
-    this.stateDemands = JSON.parse(JSON.stringify(SEED_STATE_DEMANDS));
-    for (const asmt of SEED_ASSESSMENTS) {
-      this.assessments.set(asmt.id, JSON.parse(JSON.stringify(asmt)));
-    }
-    this.employerSurveys = JSON.parse(JSON.stringify(SEED_EMPLOYER_SURVEYS));
-    this.recommendations = JSON.parse(JSON.stringify(SEED_RECOMMENDATIONS));
-  }
-  // User queries
-  getUserByEmail(email) {
-    for (const u of this.users.values()) {
-      if (u.email.toLowerCase() === email.toLowerCase()) return u;
-    }
-    return void 0;
-  }
-  getUserById(id) {
-    return this.users.get(id);
-  }
-  createUser(user) {
-    this.users.set(user.id, user);
-    return user;
-  }
-  // Student queries
-  getStudentProfileByUserId(userId) {
-    return this.studentProfiles.get(userId);
-  }
-  saveStudentProfile(profile) {
-    this.studentProfiles.set(profile.userId, profile);
-    return profile;
-  }
-  // Job queries
-  getAllJobs() {
-    return Array.from(this.jobs.values()).sort(
-      (a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime()
-    );
-  }
-  getJobById(id) {
-    return this.jobs.get(id);
-  }
-  createJob(job) {
-    this.jobs.set(job.id, job);
-    return job;
-  }
-  // Skills queries
-  getAllSkills() {
-    return Array.from(this.skills.values());
-  }
-  getSkillById(id) {
-    return this.skills.get(id);
-  }
-  // Course & Curricula queries
-  getAllCourses() {
-    return Array.from(this.courses.values());
-  }
-  getCurriculaForCourse(courseId) {
-    for (const cur of this.curricula.values()) {
-      if (cur.courseId === courseId) return cur;
-    }
-    return void 0;
-  }
-  saveCurriculum(curriculum) {
-    this.curricula.set(curriculum.id, curriculum);
-    return curriculum;
-  }
-  // Assessments
-  getAllAssessments() {
-    return Array.from(this.assessments.values());
-  }
-  getAssessmentById(id) {
-    return this.assessments.get(id);
-  }
-  addAssessmentResult(result) {
-    this.assessmentResults.push(result);
-  }
-  getAssessmentResultsForStudent(studentId) {
-    return this.assessmentResults.filter((r) => r.studentId === studentId);
-  }
-  // Surveys
-  getAllSurveys() {
-    return this.employerSurveys;
-  }
-  addSurvey(survey) {
-    this.employerSurveys.unshift(survey);
-  }
-  // Recommendations
-  getRecommendations(targetRoleType) {
-    if (!targetRoleType) return this.recommendations;
-    return this.recommendations.filter((r) => r.targetRoleType === targetRoleType);
-  }
-  addRecommendation(rec) {
-    this.recommendations.unshift(rec);
-  }
-};
-var db = new DatabaseStore();
+});
+
+// backend/serverless.ts
+import dotenv2 from "dotenv";
+
+// backend/app.ts
+import express from "express";
+import dotenv from "dotenv";
 
 // backend/api/auth.ts
+init_store();
+import { Router } from "express";
+import jwt from "jsonwebtoken";
 var authRouter = Router();
 var JWT_SECRET = process.env.JWT_SECRET || "kaushal-setu-sih-2026-super-secret-key";
 function generateToken(user) {
@@ -935,10 +1045,11 @@ authRouter.get("/me", (req, res) => {
 });
 
 // backend/api/student.ts
+init_store();
 import { Router as Router2 } from "express";
 
-// backend/services/geminiService.ts
-import { Type } from "@google/genai";
+// backend/services/skillExtractor.ts
+init_taxonomy();
 
 // backend/services/aiRouter.ts
 import { GoogleGenAI } from "@google/genai";
@@ -1192,7 +1303,600 @@ async function generateAIResponse(options) {
   };
 }
 
+// backend/services/resumeParser.ts
+function parseResumeDeterministically(text) {
+  if (!text || typeof text !== "string") {
+    return {
+      candidate: { name: "", email: "", phone: "", location: "" },
+      summary: "",
+      education: [],
+      skills: [],
+      experience: [],
+      projects: [],
+      certifications: [],
+      possibleRoles: []
+    };
+  }
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  const emailMatch = text.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/i);
+  const phoneMatch = text.match(/(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}|\b[6-9]\d{9}\b/);
+  let candidateName = "";
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
+    const line = lines[i];
+    if (line.length > 2 && line.length < 50 && !line.includes("@") && !line.toLowerCase().includes("resume") && !line.toLowerCase().includes("curriculum") && !line.toLowerCase().includes("phone") && !line.toLowerCase().includes("http") && !line.toLowerCase().includes("git")) {
+      candidateName = line.replace(/^[#*\s-]+/, "").trim();
+      break;
+    }
+  }
+  const cityRegex = /\b(Bengaluru|Bangalore|Pune|Mumbai|Delhi|Hyderabad|Chennai|Kolkata|Noida|Gurgaon|Gurugram|Ahmedabad|Jaipur|Chandigarh|Kochi)\b/i;
+  const locMatch = text.match(cityRegex);
+  const location = locMatch ? locMatch[0] : "";
+  let summary = "";
+  const summaryHeaderIdx = lines.findIndex(
+    (l) => /^(summary|professional summary|profile|about me|objective)[:\s]*$/i.test(l)
+  );
+  if (summaryHeaderIdx !== -1 && lines[summaryHeaderIdx + 1]) {
+    summary = lines[summaryHeaderIdx + 1];
+  } else {
+    const candidateSummary = lines.find(
+      (l) => l.length > 60 && !l.includes(":") && !l.startsWith("-") && !l.startsWith("\u2022")
+    );
+    summary = candidateSummary || "";
+  }
+  const education = [];
+  const degreeRegex = /(B\.?Tech|B\.?E\.?|M\.?Tech|M\.?E\.?|B\.?Sc|M\.?Sc|BCA|MCA|Bachelor|Master|Diploma)[\w\s,.-]*/i;
+  const yearRegex = /\b(20\d{2}(?:\s*[-–]\s*20?\d{2})?)\b/;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const degMatch = line.match(degreeRegex);
+    if (degMatch) {
+      const yrMatch = line.match(yearRegex);
+      const degree = degMatch[0].trim();
+      let institution = line.replace(degMatch[0], "").replace(yearRegex, "").replace(/[,|–-]/g, " ").trim();
+      if (!institution && i > 0) {
+        institution = lines[i - 1];
+      }
+      education.push({
+        degree,
+        institution: institution || "Engineering Institute / University",
+        year: yrMatch ? yrMatch[0] : ""
+      });
+      if (education.length >= 3) break;
+    }
+  }
+  const rawExtracted = skillExtractor.extractFromText(text);
+  const skills = rawExtracted.map((res) => ({
+    name: res.skill.canonicalName,
+    category: res.skill.category.toLowerCase().includes("soft") ? "soft" : "technical",
+    evidence: `Extracted from text: "${res.extractedFromText}"`
+  }));
+  const projects = [];
+  let inProjects = false;
+  let currentProject = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^(projects|academic projects|key projects)[:\s]*$/i.test(line)) {
+      inProjects = true;
+      continue;
+    }
+    if (inProjects && /^(experience|work experience|education|certifications|skills|technical skills|achievements)[:\s]*$/i.test(
+      line
+    )) {
+      inProjects = false;
+      if (currentProject) projects.push(currentProject);
+      currentProject = null;
+      continue;
+    }
+    if (inProjects) {
+      if (/^(\d+\.|\*|-|•)\s+[A-Z]/.test(line) || /^[A-Z][A-Za-z0-9\s-]{3,40}(?:\s*\([^)]+\))?:?$/.test(line)) {
+        if (currentProject) projects.push(currentProject);
+        const nameClean = line.replace(/^(\d+\.|\*|-|•)\s*/, "").replace(/:$/, "").trim();
+        currentProject = {
+          name: nameClean,
+          description: "",
+          technologies: []
+        };
+      } else if (currentProject) {
+        if (!currentProject.description) {
+          currentProject.description = line;
+        } else {
+          currentProject.description += " " + line;
+        }
+      }
+    }
+  }
+  if (currentProject) projects.push(currentProject);
+  const experience = [];
+  let inExp = false;
+  let currentExp = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^(experience|work experience|internships|professional experience)[:\s]*$/i.test(
+      line
+    )) {
+      inExp = true;
+      continue;
+    }
+    if (inExp && /^(projects|education|certifications|skills|achievements)[:\s]*$/i.test(line)) {
+      inExp = false;
+      if (currentExp) experience.push(currentExp);
+      currentExp = null;
+      continue;
+    }
+    if (inExp) {
+      if (/^(\d+\.|\*|-|•)\s+[A-Z]/.test(line) || /^[A-Z][A-Za-z0-9\s,-]{3,50}\s*[-|–]/.test(line)) {
+        if (currentExp) experience.push(currentExp);
+        const parts = line.split(/[-|–]/).map((p) => p.trim());
+        currentExp = {
+          company: parts[0] || "Organization",
+          role: parts[1] || "Intern / Engineer",
+          duration: parts[2] || "",
+          responsibilities: []
+        };
+      } else if (currentExp && (line.startsWith("-") || line.startsWith("\u2022"))) {
+        currentExp.responsibilities.push(line.replace(/^[-•*]\s*/, "").trim());
+      }
+    }
+  }
+  if (currentExp) experience.push(currentExp);
+  const certifications = [];
+  const certLines = lines.filter(
+    (l) => /(certified|certification|certificate|aws certified|cka|coursera|udemy|nptel)/i.test(l)
+  );
+  for (const cl of certLines.slice(0, 5)) {
+    certifications.push(cl.replace(/^[-•*]\s*/, "").trim());
+  }
+  const skillNamesLower = new Set(skills.map((s) => s.name.toLowerCase()));
+  const possibleRoles = [];
+  if (skillNamesLower.has("docker") || skillNamesLower.has("kubernetes") || skillNamesLower.has("linux") || skillNamesLower.has("aws")) {
+    possibleRoles.push("DevOps / Cloud Engineer");
+  }
+  if (skillNamesLower.has("react") || skillNamesLower.has("javascript") || skillNamesLower.has("typescript") || skillNamesLower.has("html5 & css3")) {
+    possibleRoles.push("Frontend Developer");
+  }
+  if (skillNamesLower.has("node.js") || skillNamesLower.has("fastapi") || skillNamesLower.has("postgresql") || skillNamesLower.has("sql")) {
+    possibleRoles.push("Backend Developer");
+  }
+  if (skillNamesLower.has("python") && (skillNamesLower.has("machine learning") || skillNamesLower.has("generative ai") || skillNamesLower.has("pytorch"))) {
+    possibleRoles.push("AI & Data Science Engineer");
+  }
+  if (possibleRoles.length === 0) {
+    possibleRoles.push("Software Engineer");
+  }
+  return {
+    candidate: {
+      name: candidateName,
+      email: emailMatch ? emailMatch[0] : "",
+      phone: phoneMatch ? phoneMatch[0] : "",
+      location
+    },
+    summary,
+    education,
+    skills,
+    experience,
+    projects,
+    certifications,
+    possibleRoles
+  };
+}
+async function parseResumeWithCentralizedAI(resumeText) {
+  if (!resumeText || !resumeText.trim()) {
+    const empty = parseResumeDeterministically("");
+    return {
+      parsedResume: empty,
+      provider: "deterministic",
+      modelUsed: "SkillSetu Deterministic Engine",
+      fallbackUsed: true
+    };
+  }
+  const systemPrompt = `You are a high-precision Resume Intelligence parser for the SkillSetu platform.
+Extract all candidate information from the provided resume text into a structured JSON object.
+
+CRITICAL EXTRACTION RULES:
+1. Never invent or hallucinate information that is not present in the resume text.
+2. If information is missing, return empty string "", empty array [], or null as appropriate.
+3. Classify each extracted skill category as "technical", "soft", "tool", or "language", and provide the concise evidence phrase from the resume where it appeared.
+4. Detect realistic possible industry roles matching this candidate's profile.
+5. Return ONLY a single valid JSON object strictly adhering to this schema:
+{
+  "candidate": {
+    "name": "string",
+    "email": "string",
+    "phone": "string",
+    "location": "string"
+  },
+  "summary": "string",
+  "education": [
+    {
+      "degree": "string",
+      "institution": "string",
+      "year": "string"
+    }
+  ],
+  "skills": [
+    {
+      "name": "string",
+      "category": "technical|soft|tool|language",
+      "evidence": "string"
+    }
+  ],
+  "experience": [
+    {
+      "company": "string",
+      "role": "string",
+      "duration": "string",
+      "responsibilities": ["string"]
+    }
+  ],
+  "projects": [
+    {
+      "name": "string",
+      "description": "string",
+      "technologies": ["string"]
+    }
+  ],
+  "certifications": ["string"],
+  "possibleRoles": ["string"]
+}`;
+  try {
+    const aiRes = await generateAIResponse({
+      task: "RESUME_ANALYSIS",
+      systemPrompt,
+      userPrompt: `RESUME TEXT:
+"""
+${resumeText.slice(0, 15e3)}
+"""`,
+      responseFormat: "json",
+      modelChoice: "gemini-2.5-flash"
+    });
+    if (aiRes.success && aiRes.response && aiRes.provider !== "none") {
+      let cleaned = aiRes.response.trim();
+      if (cleaned.startsWith("```")) {
+        cleaned = cleaned.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "").trim();
+      }
+      const firstBrace = cleaned.indexOf("{");
+      const lastBrace = cleaned.lastIndexOf("}");
+      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+        cleaned = cleaned.substring(firstBrace, lastBrace + 1);
+      }
+      const parsed = JSON.parse(cleaned);
+      if (parsed && typeof parsed === "object") {
+        const validated = {
+          candidate: {
+            name: parsed.candidate?.name || "",
+            email: parsed.candidate?.email || "",
+            phone: parsed.candidate?.phone || "",
+            location: parsed.candidate?.location || ""
+          },
+          summary: parsed.summary || "",
+          education: Array.isArray(parsed.education) ? parsed.education : [],
+          skills: Array.isArray(parsed.skills) ? parsed.skills : [],
+          experience: Array.isArray(parsed.experience) ? parsed.experience : [],
+          projects: Array.isArray(parsed.projects) ? parsed.projects : [],
+          certifications: Array.isArray(parsed.certifications) ? parsed.certifications : [],
+          possibleRoles: Array.isArray(parsed.possibleRoles) ? parsed.possibleRoles : []
+        };
+        return {
+          parsedResume: validated,
+          provider: aiRes.provider,
+          modelUsed: aiRes.model,
+          fallbackUsed: aiRes.fallbackUsed
+        };
+      }
+    }
+  } catch (err) {
+    console.warn(
+      "[AI] Centralized AI Router resume parsing error, falling back to deterministic engine:",
+      err?.message || err
+    );
+  }
+  const deterministicParsed = parseResumeDeterministically(resumeText);
+  return {
+    parsedResume: deterministicParsed,
+    provider: "deterministic",
+    modelUsed: "SkillSetu Deterministic Engine",
+    fallbackUsed: true
+  };
+}
+
+// backend/services/pdfExtractor.ts
+import { createRequire } from "module";
+var require2 = createRequire(import.meta.url);
+var pdfParse = require2("pdf-parse");
+async function extractTextFromPdf(base64OrBuffer) {
+  try {
+    let buffer;
+    if (Buffer.isBuffer(base64OrBuffer)) {
+      buffer = base64OrBuffer;
+    } else if (typeof base64OrBuffer === "string") {
+      const cleaned = base64OrBuffer.replace(/^data:[^;]+;base64,/, "").trim();
+      buffer = Buffer.from(cleaned, "base64");
+    } else {
+      throw new Error("Unsupported input type for PDF extraction.");
+    }
+    if (!buffer || buffer.length === 0) {
+      return { text: "", pageCount: 0 };
+    }
+    const data = await pdfParse(buffer);
+    const rawText = data?.text || "";
+    const cleanedText = rawText.replace(/\r\n/g, "\n").replace(/\r/g, "\n").replace(/\t/g, " ").replace(/[ \t]{2,}/g, " ").replace(/\n{3,}/g, "\n\n").trim();
+    return {
+      text: cleanedText,
+      pageCount: data?.numpages || 1,
+      info: data?.info
+    };
+  } catch (err) {
+    console.warn("[PDF Extractor] Error extracting text from PDF:", err?.message || err);
+    return {
+      text: "",
+      pageCount: 0
+    };
+  }
+}
+
+// backend/services/skillExtractor.ts
+var SkillExtractorService = class {
+  /**
+   * Deterministically extract normalized skills from freeform text using
+   * boundary-aware regex matching against canonical names and aliases.
+   */
+  extractFromText(text) {
+    if (!text || typeof text !== "string") return [];
+    const foundSkillsMap = /* @__PURE__ */ new Map();
+    const lowerText = ` ${text.toLowerCase()} `;
+    for (const skill of CANONICAL_SKILLS) {
+      const escaped = skill.canonicalName.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`(?:[^a-z0-9]|^)${escaped}(?:[^a-z0-9]|$)`, "i");
+      if (regex.test(lowerText)) {
+        foundSkillsMap.set(skill.id, {
+          skill,
+          extractedFromText: skill.canonicalName,
+          source: "DICTIONARY",
+          confidence: 0.98
+        });
+      }
+    }
+    for (const aliasEntry of SKILL_ALIASES) {
+      if (foundSkillsMap.has(aliasEntry.skillId)) continue;
+      const escaped = aliasEntry.alias.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const regex = new RegExp(`(?:[^a-z0-9]|^)${escaped}(?:[^a-z0-9]|$)`, "i");
+      if (regex.test(lowerText)) {
+        const canonical = CANONICAL_SKILLS.find((s) => s.id === aliasEntry.skillId);
+        if (canonical) {
+          foundSkillsMap.set(canonical.id, {
+            skill: canonical,
+            extractedFromText: aliasEntry.alias,
+            source: "DICTIONARY",
+            confidence: 0.95
+          });
+        }
+      }
+    }
+    return Array.from(foundSkillsMap.values());
+  }
+  /**
+   * Normalizes an array of raw skill string inputs (e.g. ['ReactJS', 'k8s', 'AWS Cloud'])
+   * into canonical skills.
+   */
+  normalizeSkills(rawSkills) {
+    const unique = /* @__PURE__ */ new Map();
+    for (const raw of rawSkills) {
+      if (!raw || typeof raw !== "string") continue;
+      const normalized = normalizeSkillText(raw);
+      if (normalized && !unique.has(normalized.id)) {
+        unique.set(normalized.id, normalized);
+      }
+    }
+    return Array.from(unique.values());
+  }
+  /**
+   * Complete End-to-End Resume Intelligence Pipeline:
+   * PDF/Text -> Text Extraction -> Centralized AI Parsing -> Skill Normalization -> Structured Result.
+   */
+  async analyzeResume(options) {
+    let extractedText = options.resumeText || "";
+    if (options.base64Pdf) {
+      const pdfResult = await extractTextFromPdf(options.base64Pdf);
+      if (pdfResult.text && pdfResult.text.trim().length > 0) {
+        extractedText = pdfResult.text.trim();
+      }
+    }
+    const aiResult = await parseResumeWithCentralizedAI(extractedText);
+    const skillsToNormalize = [];
+    const directResults = this.extractFromText(extractedText);
+    for (const res of directResults) {
+      skillsToNormalize.push(res.skill.canonicalName);
+    }
+    if (aiResult.parsedResume && Array.isArray(aiResult.parsedResume.skills)) {
+      for (const s of aiResult.parsedResume.skills) {
+        if (s.name) skillsToNormalize.push(s.name);
+      }
+    }
+    const normalizedSkills = this.normalizeSkills(skillsToNormalize);
+    return {
+      parsedResume: aiResult.parsedResume,
+      normalizedSkills,
+      extractedText,
+      provider: aiResult.provider,
+      modelUsed: aiResult.modelUsed,
+      fallbackUsed: aiResult.fallbackUsed
+    };
+  }
+  /**
+   * Backward-compatible helper method
+   */
+  async extractFromResumeHybrid(rawText, isBase64Pdf = false) {
+    const result = await this.analyzeResume({
+      resumeText: isBase64Pdf ? void 0 : rawText,
+      base64Pdf: isBase64Pdf ? rawText : void 0
+    });
+    return {
+      parsedAI: result.parsedResume,
+      normalizedSkills: result.normalizedSkills
+    };
+  }
+};
+var skillExtractor = new SkillExtractorService();
+
+// backend/services/matchingEngine.ts
+init_store();
+var MatchingEngineService = class {
+  /**
+   * Deterministically calculates match score between a student's skills and a job's requirements.
+   * Explainable formula:
+   * RequiredWeight = 0.70, PreferredWeight = 0.30
+   * Match% = (MatchedRequired / TotalRequired * 0.70 + MatchedPreferred / TotalPreferred * 0.30) * 100
+   */
+  matchStudentToJob(student, job) {
+    const studentSkillMap = new Map(
+      student.skills.map((s) => [s.skillId, s])
+    );
+    const requiredJobSkills = job.skills.filter((s) => s.isRequired);
+    const preferredJobSkills = job.skills.filter((s) => !s.isRequired);
+    let matchedRequiredCount = 0;
+    let matchedPreferredCount = 0;
+    const strongSkills = [];
+    const missingSkills = [];
+    const weakSkills = [];
+    for (const jobSkill of job.skills) {
+      const skillObj = db.getSkillById(jobSkill.skillId) || {
+        id: jobSkill.skillId,
+        canonicalName: jobSkill.skillId,
+        category: "Backend",
+        description: "",
+        marketDemandLevel: "HIGH",
+        averageSalaryBumpPct: 20
+      };
+      const studentHas = studentSkillMap.get(jobSkill.skillId);
+      if (!studentHas) {
+        const priority = jobSkill.isRequired ? skillObj.marketDemandLevel === "HIGH" ? "CRITICAL" : "HIGH" : "MEDIUM";
+        missingSkills.push({
+          skill: skillObj,
+          status: "MISSING",
+          isRequired: jobSkill.isRequired,
+          requiredProficiency: jobSkill.minProficiency,
+          marketDemand: skillObj.marketDemandLevel,
+          gapPriority: priority,
+          explanation: jobSkill.isRequired ? `Mandatory requirement for this role (${jobSkill.minProficiency} level needed). Industry demand is ${skillObj.marketDemandLevel}.` : `Preferred skill. Would boost candidate rating.`
+        });
+      } else {
+        const isProficient = this.isProficiencySufficient(
+          studentHas.proficiency,
+          jobSkill.minProficiency
+        );
+        if (isProficient) {
+          if (jobSkill.isRequired) matchedRequiredCount++;
+          else matchedPreferredCount++;
+          const isStrong = studentHas.verified && (studentHas.proficiency === "ADVANCED" || studentHas.proficiency === "INTERMEDIATE");
+          const detail = {
+            skill: skillObj,
+            status: isStrong ? "STRONG" : "MATCHED",
+            isRequired: jobSkill.isRequired,
+            studentProficiency: studentHas.proficiency,
+            requiredProficiency: jobSkill.minProficiency,
+            marketDemand: skillObj.marketDemandLevel,
+            gapPriority: "LOW",
+            explanation: `Candidate verified at ${studentHas.proficiency} level (meets ${jobSkill.minProficiency} threshold).`
+          };
+          if (isStrong) strongSkills.push(detail);
+        } else {
+          weakSkills.push({
+            skill: skillObj,
+            status: "WEAK",
+            isRequired: jobSkill.isRequired,
+            studentProficiency: studentHas.proficiency,
+            requiredProficiency: jobSkill.minProficiency,
+            marketDemand: skillObj.marketDemandLevel,
+            gapPriority: "HIGH",
+            explanation: `Candidate has ${studentHas.proficiency} proficiency, but job explicitly requires ${jobSkill.minProficiency}.`
+          });
+        }
+      }
+    }
+    const totalRequired = Math.max(1, requiredJobSkills.length);
+    const requiredMatchFraction = matchedRequiredCount / totalRequired;
+    let overallMatchPct = 0;
+    let preferredMatchFraction = 1;
+    if (preferredJobSkills.length > 0) {
+      preferredMatchFraction = matchedPreferredCount / preferredJobSkills.length;
+      overallMatchPct = Math.round((requiredMatchFraction * 0.7 + preferredMatchFraction * 0.3) * 100);
+    } else {
+      overallMatchPct = Math.round(requiredMatchFraction * 100);
+    }
+    const requiredMatchPct = Math.round(requiredMatchFraction * 100);
+    const preferredMatchPct = Math.round(preferredMatchFraction * 100);
+    const matchBreakdownExplanation = `Score computed mathematically: ${matchedRequiredCount}/${totalRequired} mandatory skills met (${requiredMatchPct}% required weight) + ${matchedPreferredCount}/${Math.max(1, preferredJobSkills.length)} preferred skills met (${preferredMatchPct}% preferred weight). Identified ${missingSkills.length} missing skill gaps.`;
+    return {
+      job,
+      overallMatchPct,
+      requiredMatchPct,
+      preferredMatchPct,
+      matchedSkillsCount: matchedRequiredCount + matchedPreferredCount,
+      totalRequiredCount: totalRequired,
+      strongSkills,
+      missingSkills,
+      weakSkills,
+      matchBreakdownExplanation
+    };
+  }
+  isProficiencySufficient(has, needed) {
+    const rank = {
+      BEGINNER: 1,
+      INTERMEDIATE: 2,
+      ADVANCED: 3
+    };
+    return (rank[has] || 1) >= (rank[needed] || 1);
+  }
+  /**
+   * Evaluates skill gaps between a student and their chosen Target Role across the whole market
+   */
+  evaluateRoleSkillGaps(student, targetRole) {
+    const matchingJobs = db.getAllJobs().filter(
+      (j) => j.roleCategory.toLowerCase().includes(targetRole.toLowerCase()) || targetRole.toLowerCase().includes(j.roleCategory.toLowerCase())
+    );
+    const jobsToUse = matchingJobs.length > 0 ? matchingJobs : db.getAllJobs().slice(0, 3);
+    const marketSkillFrequency = /* @__PURE__ */ new Map();
+    for (const job of jobsToUse) {
+      for (const js of job.skills) {
+        marketSkillFrequency.set(js.skillId, (marketSkillFrequency.get(js.skillId) || 0) + (js.isRequired ? 2 : 1));
+      }
+    }
+    const studentSkillIds = new Set(student.skills.map((s) => s.skillId));
+    const marketSkillsNeeded = [];
+    let strongCount = 0;
+    let missingCount = 0;
+    for (const [skillId] of marketSkillFrequency.entries()) {
+      const skill = db.getSkillById(skillId);
+      if (!skill) continue;
+      const has = studentSkillIds.has(skillId);
+      const isMissing = !has;
+      if (isMissing) {
+        missingCount++;
+      } else {
+        strongCount++;
+      }
+      marketSkillsNeeded.push({
+        skill,
+        marketDemand: skill.marketDemandLevel,
+        isMissing,
+        isWeak: false
+      });
+    }
+    const total = marketSkillsNeeded.length || 1;
+    const overallPreparednessPct = Math.round(strongCount / total * 100);
+    return {
+      targetRole,
+      marketSkillsNeeded,
+      strongCount,
+      missingCount,
+      overallPreparednessPct
+    };
+  }
+};
+var matchingEngine = new MatchingEngineService();
+
 // backend/services/geminiService.ts
+import { Type } from "@google/genai";
 function getAIClient() {
   const apiKey = process.env.GEMINI_API_KEY;
   const groqKey = process.env.GROQ_API_KEY;
@@ -1247,76 +1951,6 @@ function getAIClient() {
       }
     }
   };
-}
-async function parseResumeWithGemini(content, isBase64Pdf = false) {
-  const ai = getAIClient();
-  if (!ai) return null;
-  try {
-    const prompt = `You are a high-precision Industry Demand Resume Intelligence parser for the Smart India Hackathon.
-Extract technical skills, soft skills, education, certifications, and experience from the provided resume.
-Standardize and extract individual skills accurately. Return ONLY a valid JSON object matching the requested schema.`;
-    let contentsPayload;
-    if (isBase64Pdf) {
-      contentsPayload = {
-        parts: [
-          {
-            inlineData: {
-              mimeType: "application/pdf",
-              data: content
-            }
-          },
-          { text: prompt }
-        ]
-      };
-    } else {
-      contentsPayload = `${prompt}
-
-RESUME CONTENT:
-"""
-${content}
-"""`;
-    }
-    const response = await ai.models.generateContent({
-      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
-      contents: contentsPayload,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            name: { type: Type.STRING },
-            email: { type: Type.STRING },
-            education: { type: Type.STRING },
-            experienceYears: { type: Type.NUMBER },
-            technicalSkills: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            softSkills: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            certifications: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            projects: {
-              type: Type.ARRAY,
-              items: { type: Type.STRING }
-            },
-            summary: { type: Type.STRING }
-          },
-          required: ["name", "education", "technicalSkills"]
-        }
-      }
-    });
-    const text = response.text;
-    if (!text) return null;
-    return JSON.parse(text);
-  } catch (err) {
-    console.error("Gemini Resume Parsing error:", err);
-    return null;
-  }
 }
 async function generateJobRequirementsWithGemini(promptInput) {
   const ai = getAIClient();
@@ -1897,239 +2531,6 @@ Return ONLY a JSON object:
   return fallbackEval;
 }
 
-// backend/services/skillExtractor.ts
-var SkillExtractorService = class {
-  /**
-   * Deterministically extract normalized skills from freeform text using
-   * boundary-aware regex matching against canonical names and aliases.
-   */
-  extractFromText(text) {
-    if (!text || typeof text !== "string") return [];
-    const foundSkillsMap = /* @__PURE__ */ new Map();
-    const lowerText = ` ${text.toLowerCase()} `;
-    for (const skill of CANONICAL_SKILLS) {
-      const escaped = skill.canonicalName.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(`(?:[^a-z0-9]|^)${escaped}(?:[^a-z0-9]|$)`, "i");
-      if (regex.test(lowerText)) {
-        foundSkillsMap.set(skill.id, {
-          skill,
-          extractedFromText: skill.canonicalName,
-          source: "DICTIONARY",
-          confidence: 0.98
-        });
-      }
-    }
-    for (const aliasEntry of SKILL_ALIASES) {
-      if (foundSkillsMap.has(aliasEntry.skillId)) continue;
-      const escaped = aliasEntry.alias.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      const regex = new RegExp(`(?:[^a-z0-9]|^)${escaped}(?:[^a-z0-9]|$)`, "i");
-      if (regex.test(lowerText)) {
-        const canonical = CANONICAL_SKILLS.find((s) => s.id === aliasEntry.skillId);
-        if (canonical) {
-          foundSkillsMap.set(canonical.id, {
-            skill: canonical,
-            extractedFromText: aliasEntry.alias,
-            source: "DICTIONARY",
-            confidence: 0.95
-          });
-        }
-      }
-    }
-    return Array.from(foundSkillsMap.values());
-  }
-  /**
-   * Normalizes an array of raw skill string inputs (e.g. ['ReactJS', 'k8s', 'AWS Cloud'])
-   * into canonical skills.
-   */
-  normalizeSkills(rawSkills) {
-    const unique = /* @__PURE__ */ new Map();
-    for (const raw of rawSkills) {
-      const normalized = normalizeSkillText(raw);
-      if (normalized && !unique.has(normalized.id)) {
-        unique.set(normalized.id, normalized);
-      }
-    }
-    return Array.from(unique.values());
-  }
-  /**
-   * Hybrid deep resume extraction: Runs fast dictionary scan + Gemini 3.8 Flash
-   * to discover context, education, certifications, and projects.
-   */
-  async extractFromResumeHybrid(rawText, isBase64Pdf = false) {
-    const aiParsed = await parseResumeWithGemini(rawText, isBase64Pdf);
-    const skillsToNormalize = [];
-    const directResults = this.extractFromText(rawText);
-    for (const res of directResults) {
-      skillsToNormalize.push(res.skill.canonicalName);
-    }
-    if (aiParsed && Array.isArray(aiParsed.technicalSkills)) {
-      skillsToNormalize.push(...aiParsed.technicalSkills);
-    }
-    const normalizedSkills = this.normalizeSkills(skillsToNormalize);
-    return {
-      parsedAI: aiParsed,
-      normalizedSkills
-    };
-  }
-};
-var skillExtractor = new SkillExtractorService();
-
-// backend/services/matchingEngine.ts
-var MatchingEngineService = class {
-  /**
-   * Deterministically calculates match score between a student's skills and a job's requirements.
-   * Explainable formula:
-   * RequiredWeight = 0.70, PreferredWeight = 0.30
-   * Match% = (MatchedRequired / TotalRequired * 0.70 + MatchedPreferred / TotalPreferred * 0.30) * 100
-   */
-  matchStudentToJob(student, job) {
-    const studentSkillMap = new Map(
-      student.skills.map((s) => [s.skillId, s])
-    );
-    const requiredJobSkills = job.skills.filter((s) => s.isRequired);
-    const preferredJobSkills = job.skills.filter((s) => !s.isRequired);
-    let matchedRequiredCount = 0;
-    let matchedPreferredCount = 0;
-    const strongSkills = [];
-    const missingSkills = [];
-    const weakSkills = [];
-    for (const jobSkill of job.skills) {
-      const skillObj = db.getSkillById(jobSkill.skillId) || {
-        id: jobSkill.skillId,
-        canonicalName: jobSkill.skillId,
-        category: "Backend",
-        description: "",
-        marketDemandLevel: "HIGH",
-        averageSalaryBumpPct: 20
-      };
-      const studentHas = studentSkillMap.get(jobSkill.skillId);
-      if (!studentHas) {
-        const priority = jobSkill.isRequired ? skillObj.marketDemandLevel === "HIGH" ? "CRITICAL" : "HIGH" : "MEDIUM";
-        missingSkills.push({
-          skill: skillObj,
-          status: "MISSING",
-          isRequired: jobSkill.isRequired,
-          requiredProficiency: jobSkill.minProficiency,
-          marketDemand: skillObj.marketDemandLevel,
-          gapPriority: priority,
-          explanation: jobSkill.isRequired ? `Mandatory requirement for this role (${jobSkill.minProficiency} level needed). Industry demand is ${skillObj.marketDemandLevel}.` : `Preferred skill. Would boost candidate rating.`
-        });
-      } else {
-        const isProficient = this.isProficiencySufficient(
-          studentHas.proficiency,
-          jobSkill.minProficiency
-        );
-        if (isProficient) {
-          if (jobSkill.isRequired) matchedRequiredCount++;
-          else matchedPreferredCount++;
-          const isStrong = studentHas.verified && (studentHas.proficiency === "ADVANCED" || studentHas.proficiency === "INTERMEDIATE");
-          const detail = {
-            skill: skillObj,
-            status: isStrong ? "STRONG" : "MATCHED",
-            isRequired: jobSkill.isRequired,
-            studentProficiency: studentHas.proficiency,
-            requiredProficiency: jobSkill.minProficiency,
-            marketDemand: skillObj.marketDemandLevel,
-            gapPriority: "LOW",
-            explanation: `Candidate verified at ${studentHas.proficiency} level (meets ${jobSkill.minProficiency} threshold).`
-          };
-          if (isStrong) strongSkills.push(detail);
-        } else {
-          weakSkills.push({
-            skill: skillObj,
-            status: "WEAK",
-            isRequired: jobSkill.isRequired,
-            studentProficiency: studentHas.proficiency,
-            requiredProficiency: jobSkill.minProficiency,
-            marketDemand: skillObj.marketDemandLevel,
-            gapPriority: "HIGH",
-            explanation: `Candidate has ${studentHas.proficiency} proficiency, but job explicitly requires ${jobSkill.minProficiency}.`
-          });
-        }
-      }
-    }
-    const totalRequired = Math.max(1, requiredJobSkills.length);
-    const requiredMatchFraction = matchedRequiredCount / totalRequired;
-    let overallMatchPct = 0;
-    let preferredMatchFraction = 1;
-    if (preferredJobSkills.length > 0) {
-      preferredMatchFraction = matchedPreferredCount / preferredJobSkills.length;
-      overallMatchPct = Math.round((requiredMatchFraction * 0.7 + preferredMatchFraction * 0.3) * 100);
-    } else {
-      overallMatchPct = Math.round(requiredMatchFraction * 100);
-    }
-    const requiredMatchPct = Math.round(requiredMatchFraction * 100);
-    const preferredMatchPct = Math.round(preferredMatchFraction * 100);
-    const matchBreakdownExplanation = `Score computed mathematically: ${matchedRequiredCount}/${totalRequired} mandatory skills met (${requiredMatchPct}% required weight) + ${matchedPreferredCount}/${Math.max(1, preferredJobSkills.length)} preferred skills met (${preferredMatchPct}% preferred weight). Identified ${missingSkills.length} missing skill gaps.`;
-    return {
-      job,
-      overallMatchPct,
-      requiredMatchPct,
-      preferredMatchPct,
-      matchedSkillsCount: matchedRequiredCount + matchedPreferredCount,
-      totalRequiredCount: totalRequired,
-      strongSkills,
-      missingSkills,
-      weakSkills,
-      matchBreakdownExplanation
-    };
-  }
-  isProficiencySufficient(has, needed) {
-    const rank = {
-      BEGINNER: 1,
-      INTERMEDIATE: 2,
-      ADVANCED: 3
-    };
-    return (rank[has] || 1) >= (rank[needed] || 1);
-  }
-  /**
-   * Evaluates skill gaps between a student and their chosen Target Role across the whole market
-   */
-  evaluateRoleSkillGaps(student, targetRole) {
-    const matchingJobs = db.getAllJobs().filter(
-      (j) => j.roleCategory.toLowerCase().includes(targetRole.toLowerCase()) || targetRole.toLowerCase().includes(j.roleCategory.toLowerCase())
-    );
-    const jobsToUse = matchingJobs.length > 0 ? matchingJobs : db.getAllJobs().slice(0, 3);
-    const marketSkillFrequency = /* @__PURE__ */ new Map();
-    for (const job of jobsToUse) {
-      for (const js of job.skills) {
-        marketSkillFrequency.set(js.skillId, (marketSkillFrequency.get(js.skillId) || 0) + (js.isRequired ? 2 : 1));
-      }
-    }
-    const studentSkillIds = new Set(student.skills.map((s) => s.skillId));
-    const marketSkillsNeeded = [];
-    let strongCount = 0;
-    let missingCount = 0;
-    for (const [skillId] of marketSkillFrequency.entries()) {
-      const skill = db.getSkillById(skillId);
-      if (!skill) continue;
-      const has = studentSkillIds.has(skillId);
-      const isMissing = !has;
-      if (isMissing) {
-        missingCount++;
-      } else {
-        strongCount++;
-      }
-      marketSkillsNeeded.push({
-        skill,
-        marketDemand: skill.marketDemandLevel,
-        isMissing,
-        isWeak: false
-      });
-    }
-    const total = marketSkillsNeeded.length || 1;
-    const overallPreparednessPct = Math.round(strongCount / total * 100);
-    return {
-      targetRole,
-      marketSkillsNeeded,
-      strongCount,
-      missingCount,
-      overallPreparednessPct
-    };
-  }
-};
-var matchingEngine = new MatchingEngineService();
-
 // backend/api/student.ts
 var studentRouter = Router2();
 function getActiveProfile(req) {
@@ -2334,6 +2735,9 @@ function buildStudentDashboardData(profile) {
       education: profile.education,
       experienceLevel: profile.experienceLevel,
       bio: profile.bio,
+      resumeFileName: profile.resumeFileName,
+      resumeData: profile.resumeData,
+      possibleRoles: profile.possibleRoles || [],
       profileCompleteness: {
         pct: completenessPct,
         breakdown: {
@@ -2540,16 +2944,38 @@ studentRouter.post("/resume/upload", async (req, res) => {
       res.status(400).json({ error: "Please provide resumeText or base64Pdf data." });
       return;
     }
-    const rawContent = base64Pdf || resumeText;
-    const isPdf = Boolean(base64Pdf);
-    const extraction = await skillExtractor.extractFromResumeHybrid(rawContent, isPdf);
+    const analysis = await skillExtractor.analyzeResume({
+      resumeText: typeof resumeText === "string" ? resumeText : void 0,
+      base64Pdf: typeof base64Pdf === "string" ? base64Pdf : void 0
+    });
+    const parsed = analysis.parsedResume;
     profile.resumeFileName = fileName || "Uploaded_Resume.pdf";
-    profile.resumeText = resumeText || (extraction.parsedAI ? extraction.parsedAI.summary : "Resume uploaded in PDF format.");
-    const existingSkillIds = new Set(profile.skills.map((s) => s.skillId));
+    profile.resumeData = parsed;
+    profile.possibleRoles = parsed.possibleRoles || [];
+    if (analysis.extractedText) {
+      profile.resumeText = analysis.extractedText;
+    } else if (resumeText) {
+      profile.resumeText = resumeText;
+    } else if (parsed.summary) {
+      profile.resumeText = parsed.summary;
+    }
+    if (parsed.candidate?.name && parsed.candidate.name.trim().length > 1) {
+      const user = db.getUserById(profile.userId);
+      if (user && (!user.name || user.name === "Student Candidate" || user.name === "Default Student")) {
+        user.name = parsed.candidate.name.trim();
+        db.users.set(user.id, user);
+      }
+    }
+    if (parsed.education && parsed.education.length > 0 && (!profile.education || profile.education.trim().length === 0)) {
+      profile.education = parsed.education.map((e) => `${e.degree || "Degree"}${e.institution ? ` from ${e.institution}` : ""}${e.year ? ` (${e.year})` : ""}`).join("; ");
+    }
+    if (parsed.summary && (!profile.bio || profile.bio.trim().length === 0)) {
+      profile.bio = parsed.summary;
+    }
+    const existingSkillMap = new Map(profile.skills.map((s) => [s.skillId, s]));
     const newlyAddedSkills = [];
-    for (const skill of extraction.normalizedSkills) {
-      if (!existingSkillIds.has(skill.id)) {
-        existingSkillIds.add(skill.id);
+    for (const skill of analysis.normalizedSkills) {
+      if (!existingSkillMap.has(skill.id)) {
         const newStudentSkill = {
           skillId: skill.id,
           proficiency: "INTERMEDIATE",
@@ -2558,19 +2984,36 @@ studentRouter.post("/resume/upload", async (req, res) => {
           lastEvaluated: (/* @__PURE__ */ new Date()).toISOString()
         };
         profile.skills.push(newStudentSkill);
+        existingSkillMap.set(skill.id, newStudentSkill);
         newlyAddedSkills.push(newStudentSkill);
       }
     }
-    profile.profileCompletionPct = Math.min(100, profile.profileCompletionPct + 15);
+    let completeness = 0;
+    if (profile.resumeText || profile.resumeData) completeness += 25;
+    if (profile.education) completeness += 20;
+    if (profile.skills.length >= 3) completeness += 30;
+    if (profile.targetRole) completeness += 15;
+    if (profile.preferredLocation) completeness += 10;
+    profile.profileCompletionPct = Math.min(100, Math.max(completeness, profile.profileCompletionPct));
     db.saveStudentProfile(profile);
+    const roleGaps = matchingEngine.evaluateRoleSkillGaps(profile, profile.targetRole);
+    const allJobs = db.getAllJobs();
+    const matchedJobs = allJobs.map((job) => matchingEngine.matchStudentToJob(profile, job));
+    matchedJobs.sort((a, b) => b.overallMatchPct - a.overallMatchPct);
     res.json({
-      message: `Resume parsed successfully. Extracted ${extraction.normalizedSkills.length} normalized skills (${newlyAddedSkills.length} new).`,
-      parsedAI: extraction.parsedAI,
-      normalizedSkills: extraction.normalizedSkills,
+      message: "Resume analyzed successfully",
+      parsedResume: parsed,
+      normalizedSkills: analysis.normalizedSkills,
       newlyAddedCount: newlyAddedSkills.length,
-      currentSkillsCount: profile.skills.length
+      currentSkillsCount: profile.skills.length,
+      provider: analysis.provider,
+      modelUsed: analysis.modelUsed,
+      fallbackUsed: analysis.fallbackUsed,
+      roleGaps,
+      jobMatches: matchedJobs.slice(0, 5)
     });
   } catch (err) {
+    console.error("[Resume Upload API] Error:", err);
     res.status(500).json({ error: err.message || "Resume parsing failed." });
   }
 });
@@ -2960,9 +3403,11 @@ studentRouter.post("/simulator/evaluate", async (req, res) => {
 });
 
 // backend/api/institute.ts
+init_store();
 import { Router as Router3 } from "express";
 
 // backend/services/curriculumEngine.ts
+init_store();
 var CurriculumEngineService = class {
   /**
    * Deterministically audit a curriculum syllabus against the benchmark of industrial skills.
@@ -3134,6 +3579,7 @@ var CurriculumEngineService = class {
 var curriculumEngine = new CurriculumEngineService();
 
 // backend/services/analyticsEngine.ts
+init_store();
 var AnalyticsEngineService = class {
   /**
    * Identifies all skill shortages and oversupplies mathematically across India.
@@ -3425,6 +3871,7 @@ instituteRouter.get("/employer-feedback", (req, res) => {
 });
 
 // backend/api/employer.ts
+init_store();
 import { Router as Router4 } from "express";
 var employerRouter = Router4();
 employerRouter.get("/jobs", (req, res) => {
@@ -3584,6 +4031,7 @@ employerRouter.post("/survey", (req, res) => {
 });
 
 // backend/api/admin.ts
+init_store();
 import { Router as Router5 } from "express";
 var adminRouter = Router5();
 adminRouter.get("/overview", (req, res) => {
@@ -3684,6 +4132,8 @@ adminRouter.get("/reports/export", (req, res) => {
 });
 
 // backend/api/market.ts
+init_store();
+init_taxonomy();
 import { Router as Router6 } from "express";
 var marketRouter = Router6();
 marketRouter.get("/skills", (req, res) => {
@@ -3726,9 +4176,31 @@ chatRouter.post("/", async (req, res) => {
       res.status(400).json({ error: "Messages array is required and cannot be empty." });
       return;
     }
+    let enrichedInstruction = systemInstruction;
+    if (userRole === "STUDENT") {
+      const { db: db2 } = await Promise.resolve().then(() => (init_store(), store_exports));
+      const studentProfile = db2.studentProfiles.get("usr-student-1") || Array.from(db2.studentProfiles.values())[0];
+      if (studentProfile) {
+        const studentSkills = studentProfile.skills.map((s) => {
+          const sk = db2.getSkillById(s.skillId);
+          return `${sk?.canonicalName || s.skillId} (${s.verified ? "Verified" : "Analysed"})`;
+        }).join(", ");
+        const candidateName = studentProfile.resumeData?.candidate?.name || userName || "Student Candidate";
+        const contextSuffix = `
+
+CURRENT STUDENT PROFILE CONTEXT:
+- Student Name: ${candidateName}
+- Target Role: ${studentProfile.targetRole}
+- Verified & Analysed Skills: ${studentSkills || "In progress"}
+- Education: ${studentProfile.education || "Undergraduate"}
+- Resume Summary: ${studentProfile.resumeData?.summary || studentProfile.bio || "Recently analysed"}
+Reference this student profile context when answering questions about their skills, career alignment, or curriculum.`;
+        enrichedInstruction = (systemInstruction || "") + contextSuffix;
+      }
+    }
     const payload = {
       messages,
-      systemInstruction,
+      systemInstruction: enrichedInstruction,
       modelChoice,
       userRole,
       userName,
@@ -3750,6 +4222,7 @@ chatRouter.post("/", async (req, res) => {
 });
 
 // backend/api/simulation.ts
+init_store();
 import { Router as Router8 } from "express";
 var simulationRouter = Router8();
 var activeSessions = /* @__PURE__ */ new Map();

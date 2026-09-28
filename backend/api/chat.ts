@@ -12,9 +12,34 @@ chatRouter.post('/', async (req: Request, res: Response) => {
       return;
     }
 
+    let enrichedInstruction = systemInstruction;
+    if (userRole === 'STUDENT') {
+      const { db } = await import('../database/store');
+      const studentProfile = db.studentProfiles.get('usr-student-1') || Array.from(db.studentProfiles.values())[0];
+      if (studentProfile) {
+        const studentSkills = studentProfile.skills
+          .map(s => {
+            const sk = db.getSkillById(s.skillId);
+            return `${sk?.canonicalName || s.skillId} (${s.verified ? 'Verified' : 'Analysed'})`;
+          })
+          .join(', ');
+
+        const candidateName = studentProfile.resumeData?.candidate?.name || userName || 'Student Candidate';
+        const contextSuffix = `\n\nCURRENT STUDENT PROFILE CONTEXT:
+- Student Name: ${candidateName}
+- Target Role: ${studentProfile.targetRole}
+- Verified & Analysed Skills: ${studentSkills || 'In progress'}
+- Education: ${studentProfile.education || 'Undergraduate'}
+- Resume Summary: ${studentProfile.resumeData?.summary || studentProfile.bio || 'Recently analysed'}
+Reference this student profile context when answering questions about their skills, career alignment, or curriculum.`;
+
+        enrichedInstruction = (systemInstruction || '') + contextSuffix;
+      }
+    }
+
     const payload: MultiTurnChatPayload = {
       messages,
-      systemInstruction,
+      systemInstruction: enrichedInstruction,
       modelChoice: modelChoice as SupportedChatModel,
       userRole,
       userName,

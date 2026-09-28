@@ -36,7 +36,7 @@ export default function App() {
       email: 'dean.academic@pict.ac.in',
     },
     EMPLOYER: {
-      name: 'Priya Sundaram',
+      name: 'Hr Priya Sundaram',
       org: 'Razorpay Software Pvt Ltd',
       email: 'talent@razorpay.com',
     },

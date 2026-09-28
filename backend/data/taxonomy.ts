@@ -39,6 +39,7 @@ export const CANONICAL_SKILLS: Skill[] = [
   { id: 'sk-owasp', canonicalName: 'OWASP Top 10', category: 'Cybersecurity', description: 'Web application vulnerability remediation (SQLi, XSS, CSRF, auth bypass)', marketDemandLevel: 'HIGH', averageSalaryBumpPct: 23 },
 
   // Soft Skills & Leadership
+  { id: 'sk-testing', canonicalName: 'Testing', category: 'Frontend', description: 'Unit testing, integration testing, React Testing Library, Jest, and Cypress', marketDemandLevel: 'HIGH', averageSalaryBumpPct: 18 },
   { id: 'sk-problem-solving', canonicalName: 'Problem Solving & DSA', category: 'Soft Skills & Leadership', description: 'Data structures, algorithms, asymptotic analysis and competitive programming', marketDemandLevel: 'HIGH', averageSalaryBumpPct: 22 },
   { id: 'sk-agile', canonicalName: 'Agile & Scrum', category: 'Soft Skills & Leadership', description: 'Sprint planning, backlog grooming, standups, retrospectives and Jira', marketDemandLevel: 'MEDIUM', averageSalaryBumpPct: 12 },
   { id: 'sk-comm', canonicalName: 'Technical Communication', category: 'Soft Skills & Leadership', description: 'Cross-functional engineering communication, design docs and stakeholder presentations', marketDemandLevel: 'HIGH', averageSalaryBumpPct: 16 }
@@ -170,7 +171,28 @@ export const SKILL_ALIASES: SkillAlias[] = [
   { skillId: 'sk-cybersec', alias: 'cybersecurity' },
   { skillId: 'sk-cybersec', alias: 'cyber security' },
   { skillId: 'sk-cybersec', alias: 'infosec' },
-  { skillId: 'sk-cybersec', alias: 'ethical hacking' }
+  { skillId: 'sk-cybersec', alias: 'ethical hacking' },
+
+  // HTML & CSS
+  { skillId: 'sk-html-css', alias: 'html' },
+  { skillId: 'sk-html-css', alias: 'html5' },
+  { skillId: 'sk-html-css', alias: 'css' },
+  { skillId: 'sk-html-css', alias: 'css3' },
+  { skillId: 'sk-html-css', alias: 'html/css' },
+  { skillId: 'sk-html-css', alias: 'html and css' },
+
+  // Testing
+  { skillId: 'sk-testing', alias: 'testing' },
+  { skillId: 'sk-testing', alias: 'unit testing' },
+  { skillId: 'sk-testing', alias: 'software testing' },
+  { skillId: 'sk-testing', alias: 'react testing library' },
+  { skillId: 'sk-testing', alias: 'jest' },
+  { skillId: 'sk-testing', alias: 'cypress' },
+  { skillId: 'sk-testing', alias: 'qa' },
+
+  // CI/CD additional aliases
+  { skillId: 'sk-ci-cd', alias: 'ci/cd fundamentals' },
+  { skillId: 'sk-ci-cd', alias: 'continuous deployment' }
 ];
 
 export function normalizeSkillText(rawSkill: string): Skill | null {

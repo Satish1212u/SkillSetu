@@ -28,6 +28,62 @@ export interface StudentSkill {
   marketDemand?: string;
 }
 
+export interface StructuredResumeCandidate {
+  name: string;
+  email: string;
+  phone: string;
+  location: string;
+}
+
+export interface StructuredResumeEducation {
+  degree: string;
+  institution: string;
+  year: string;
+}
+
+export interface StructuredResumeSkill {
+  name: string;
+  category: 'technical' | 'soft' | 'tool' | 'language' | string;
+  evidence: string;
+}
+
+export interface StructuredResumeExperience {
+  company: string;
+  role: string;
+  duration: string;
+  responsibilities: string[];
+}
+
+export interface StructuredResumeProject {
+  name: string;
+  description: string;
+  technologies: string[];
+}
+
+export interface StructuredResumeData {
+  candidate: StructuredResumeCandidate;
+  summary: string;
+  education: StructuredResumeEducation[];
+  skills: StructuredResumeSkill[];
+  experience: StructuredResumeExperience[];
+  projects: StructuredResumeProject[];
+  certifications: string[];
+  possibleRoles: string[];
+}
+
+export interface ResumeUploadResponse {
+  message: string;
+  parsedResume: StructuredResumeData;
+  normalizedSkills: Skill[];
+  newlyAddedCount: number;
+  currentSkillsCount: number;
+  provider: 'gemini' | 'groq' | 'openrouter' | 'deterministic';
+  modelUsed: string;
+  fallbackUsed: boolean;
+  roleGaps?: any;
+  jobMatches?: any[];
+}
+
 export interface StudentProfile {
   id: string;
   userId: string;
@@ -40,6 +96,8 @@ export interface StudentProfile {
   skills: StudentSkill[];
   resumeText?: string;
   resumeFileName?: string;
+  resumeData?: StructuredResumeData;
+  possibleRoles?: string[];
   savedRoadmapProgress?: Record<string, boolean>;
 }
 
